@@ -158,7 +158,7 @@ export default function BrandAnalysisForm({ onSubmit, isLoading }: BrandAnalysis
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-1">🔥 Burn Report</h3>
             <p className="text-sm text-gray-600">
-              Get a sophisticated, dry-humored analysis with Bill Murray's deadpan wit and Marc Maron's sharp insights. Perfect for teams who appreciate smart comedy.
+              Get a comedy-first teardown of your brand. Perfect for teams who can laugh at themselves.
             </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">

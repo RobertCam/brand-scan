@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, FileText } from 'lucide-react';
+import Image from 'next/image';
+// Removed unused imports: Search, Download, FileText
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import BrandAnalysisForm from '@/components/BrandAnalysisForm';
 import BrandReport from '@/components/BrandReport';
@@ -52,9 +53,11 @@ export default function Home() {
           <div className="mb-6">
             {/* Brand Scan Logo */}
             <div className="flex items-center justify-center mb-6">
-              <img 
+              <Image 
                 src="/brand-scan-logo.png" 
                 alt="Brand Scan Logo" 
+                width={64}
+                height={64}
                 className="h-16 w-auto"
               />
             </div>
