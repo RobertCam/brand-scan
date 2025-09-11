@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ArrowLeft, FileText, FileDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft, FileText, ExternalLink } from 'lucide-react';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
-import jsPDF from 'jspdf';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -26,61 +25,6 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     { id: 'editorial', title: 'Editorial Ideas', icon: '✍️' },
   ];
 
-  const exportToPDF = async () => {
-    if (!reportRef.current) return;
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    // const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
-
-    // Add title
-    pdf.setFontSize(24);
-    pdf.text(data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report', margin, 30);
-
-    // Add content (simplified for PDF)
-    pdf.setFontSize(12);
-    let yPosition = 50;
-
-    // Brand Profile
-    pdf.setFontSize(16);
-    pdf.text('Brand Profile', margin, yPosition);
-    yPosition += 10;
-
-    pdf.setFontSize(12);
-    pdf.text(`Category: ${data.brand_profile.category}`, margin, yPosition);
-    yPosition += 6;
-    pdf.text(`Industry: ${data.brand_profile.industry}`, margin, yPosition);
-    yPosition += 6;
-    pdf.text(`Target Audience: ${data.brand_profile.target_audience}`, margin, yPosition);
-    yPosition += 10;
-
-    // Executive Summary
-    pdf.setFontSize(16);
-    pdf.text('Executive Summary', margin, yPosition);
-    yPosition += 10;
-
-    pdf.setFontSize(10);
-    const summaryLines = pdf.splitTextToSize(data.executive_summary, pageWidth - 2 * margin);
-    summaryLines.forEach((line: string) => {
-      pdf.text(line, margin, yPosition);
-      yPosition += 5;
-    });
-    yPosition += 10;
-
-    // Competitive Ranking
-    pdf.setFontSize(16);
-    pdf.text('Competitive Ranking', margin, yPosition);
-    yPosition += 10;
-
-    pdf.setFontSize(12);
-    sortedCompetitiveRanking.forEach((ranking, index) => {
-      pdf.text(`${index + 1}. ${ranking.brand} - Score: ${ranking.overall_score}/100`, margin, yPosition);
-      yPosition += 6;
-    });
-
-    pdf.save('brand-scan-report.pdf');
-  };
 
   const exportToMarkdown = () => {
     const markdown = `# ${data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report'}
@@ -195,20 +139,12 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
           </div>
           <div className="flex gap-2">
             <button
-              onClick={exportToPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
-              aria-label="Export report to PDF"
-            >
-              <FileDown className="w-4 h-4" />
-              PDF
-            </button>
-            <button
               onClick={exportToMarkdown}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
               aria-label="Export report to Markdown"
             >
               <FileText className="w-4 h-4" />
-              Markdown
+              Export Markdown
             </button>
             <button
               onClick={onNewAnalysis}

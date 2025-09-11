@@ -78,7 +78,20 @@ export default function Home() {
               
               {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="polite">
-                  <p className="text-red-900 font-medium">{error}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-red-800 mb-1">Analysis Failed</h3>
+                      <p className="text-sm text-red-700 mb-2">{error}</p>
+                      <p className="text-sm text-red-600">
+                        Please refresh the page and try again. If the issue persists, check your internet connection or try again later.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
