@@ -69,21 +69,21 @@ Requirements:
 4. **Sentiment Analysis**: For each channel (web, news, forums, social):
    - Provide specific score (0-100) with detailed explanation
    - Include 3-5 key insights with specific examples
-   - Include realistic sources (URLs, publications, etc.) - NO placeholder or example sources
+   - Include actual clickable URLs as sources (e.g., https://example.com/article) - NO placeholder, example, or descriptive text sources
 
 5. **SWOT Analysis**: Include competitor context for each point:
    - How strengths compare to competitors
    - How weaknesses compare to competitors
    - Opportunities competitors are missing
    - Threats competitors are facing
-   - Include realistic sources - NO placeholder or example sources
+   - Include actual clickable URLs as sources (e.g., https://example.com/article) - NO placeholder, example, or descriptive text sources
 
 6. **Competitive Ranking**: 
    - MUST include the input brand AND all provided competitors
    - Score each brand (0-100) with detailed explanations
    - Provide ranking justification explaining why each brand ranks where it does
    - Include competitor context and market positioning
-   - Include realistic sources - NO placeholder or example sources
+   - Include actual clickable URLs as sources (e.g., https://example.com/article) - NO placeholder, example, or descriptive text sources
 
 7. **Editorial Ideas**: 
    - Provide AT LEAST 2 editorial ideas in different formats
@@ -91,7 +91,7 @@ Requirements:
    - Provide sample copy that matches the brand's voice
    - No sources needed for editorial ideas
 
-8. **Sources**: Provide realistic, plausible sources. Do not use placeholder, example, or fake sources. If you cannot provide realistic sources, omit the sources field entirely.
+8. **Sources**: Provide actual clickable URLs (e.g., https://example.com/article) that users can visit to verify the information. Do not use placeholder, example, descriptive text, or fake sources. If you cannot provide real URLs, omit the sources field entirely.
 
 Return only valid JSON, no additional text.`;
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Call OpenAI with web search enabled using the responses API
     const response = await openai.responses.create({
       model: 'gpt-4o',
-      input: prompt + '\n\nIMPORTANT: Use web search to gather real-time information about the brand and competitors. Provide analysis based on current web data, news, and social media. Return only valid JSON.',
+      input: prompt + '\n\nIMPORTANT: Use web search to gather real-time information about the brand and competitors. Provide analysis based on current web data, news, and social media. For all sources, provide actual clickable URLs (e.g., https://example.com/article) that users can visit to verify the information. Return only valid JSON.',
       tools: [
         {
           type: 'web_search',
