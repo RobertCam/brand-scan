@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ArrowLeft, Download, FileText, FileDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft, FileText, FileDown, ExternalLink } from 'lucide-react';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
@@ -16,13 +16,11 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
 
   const sections = [
-    { id: 'overview', title: 'Overview', icon: '📊' },
+    { id: 'overview', title: 'Brand Overview', icon: '📊' },
     { id: 'sentiment', title: 'Sentiment Analysis', icon: '💭' },
     { id: 'swot', title: 'SWOT Analysis', icon: '🔍' },
     { id: 'competitive', title: 'Competitive Ranking', icon: '🏆' },
-    { id: 'recommendations', title: 'Recommendations', icon: '💡' },
     { id: 'editorial', title: 'Editorial Ideas', icon: '✍️' },
-    { id: 'metadata', title: 'Schema Analysis', icon: '🏗️' },
   ];
 
   const exportToPDF = async () => {
@@ -30,7 +28,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    // const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 20;
 
     // Add title
@@ -41,14 +39,31 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     pdf.setFontSize(12);
     let yPosition = 50;
 
-    // Overview
+    // Brand Profile
     pdf.setFontSize(16);
-    pdf.text('Overview', margin, yPosition);
+    pdf.text('Brand Profile', margin, yPosition);
     yPosition += 10;
 
     pdf.setFontSize(12);
-    pdf.text(`Brand: ${data.known[0] || 'N/A'}`, margin, yPosition);
-    yPosition += 8;
+    pdf.text(`Category: ${data.brand_profile.category}`, margin, yPosition);
+    yPosition += 6;
+    pdf.text(`Industry: ${data.brand_profile.industry}`, margin, yPosition);
+    yPosition += 6;
+    pdf.text(`Target Audience: ${data.brand_profile.target_audience}`, margin, yPosition);
+    yPosition += 10;
+
+    // Executive Summary
+    pdf.setFontSize(16);
+    pdf.text('Executive Summary', margin, yPosition);
+    yPosition += 10;
+
+    pdf.setFontSize(10);
+    const summaryLines = pdf.splitTextToSize(data.executive_summary, pageWidth - 2 * margin);
+    summaryLines.forEach((line: string) => {
+      pdf.text(line, margin, yPosition);
+      yPosition += 5;
+    });
+    yPosition += 10;
 
     // Competitive Ranking
     pdf.setFontSize(16);
@@ -57,7 +72,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
 
     pdf.setFontSize(12);
     data.competitive_ranking.forEach((ranking, index) => {
-      pdf.text(`${index + 1}. ${ranking.brand} - Score: ${ranking.overall}/100`, margin, yPosition);
+      pdf.text(`${index + 1}. ${ranking.brand} - Score: ${ranking.overall_score}/100`, margin, yPosition);
       yPosition += 6;
     });
 
@@ -67,53 +82,78 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const exportToMarkdown = () => {
     const markdown = `# Brand Analysis Report
 
-## Overview
-- **Brand**: ${data.known[0] || 'N/A'}
-- **Analysis Date**: ${new Date().toLocaleDateString()}
+## Brand Profile
+- **Category**: ${data.brand_profile.category}
+- **Industry**: ${data.brand_profile.industry}
+- **Target Audience**: ${data.brand_profile.target_audience}
+- **Key Differentiators**:
+${data.brand_profile.key_differentiators.map(diff => `  - ${diff}`).join('\n')}
+
+## Executive Summary
+${data.executive_summary}
+
+## Competitive Landscape
+${data.competitive_landscape}
 
 ## Sentiment Analysis
-${Object.entries(data.sentiment_by_channel).map(([channel, score]) => 
-  `- **${channel.charAt(0).toUpperCase() + channel.slice(1)}**: ${score}/100`
-).join('\n')}
+${Object.entries(data.sentiment_analysis).map(([channel, analysis]) => 
+  `### ${channel.charAt(0).toUpperCase() + channel.slice(1)} (${analysis.score}/100)
+**Analysis**: ${analysis.explanation}
 
-## Competitive Ranking
-${data.competitive_ranking.map((ranking, index) => 
-  `${index + 1}. **${ranking.brand}** - Overall Score: ${ranking.overall}/100
-   - Sentiment: ${ranking.scores.sentiment}/100
-   - Share of Voice: ${ranking.scores.sov}/100
-   - AI Readiness: ${ranking.scores.ai_readiness}/100
-   - SEO Health: ${ranking.scores.seo_health}/100
-   - Social Resonance: ${ranking.scores.social_resonance}/100`
+**Key Insights**:
+${analysis.key_insights.map((insight: string) => `- ${insight}`).join('\n')}`
 ).join('\n\n')}
 
 ## SWOT Analysis
 ### Strengths
-${data.swot.s.map(item => `- ${item.summary}`).join('\n')}
+${data.swot_analysis.strengths.map(item => 
+  `- **${item.summary}**: ${item.rationale}
+  - *Competitor Context*: ${item.competitor_context}`
+).join('\n\n')}
 
 ### Weaknesses
-${data.swot.w.map(item => `- ${item.summary}`).join('\n')}
+${data.swot_analysis.weaknesses.map(item => 
+  `- **${item.summary}**: ${item.rationale}
+  - *Competitor Context*: ${item.competitor_context}`
+).join('\n\n')}
 
 ### Opportunities
-${data.swot.o.map(item => `- ${item.summary}`).join('\n')}
+${data.swot_analysis.opportunities.map(item => 
+  `- **${item.summary}**: ${item.rationale}
+  - *Competitor Context*: ${item.competitor_context}`
+).join('\n\n')}
 
 ### Threats
-${data.swot.t.map(item => `- ${item.summary}`).join('\n')}
+${data.swot_analysis.threats.map(item => 
+  `- **${item.summary}**: ${item.rationale}
+  - *Competitor Context*: ${item.competitor_context}`
+).join('\n\n')}
 
-## Recommendations
-${data.recommendations.map(rec => 
-  `### ${rec.title}
-**Channel**: ${rec.channel.toUpperCase()}
-**Rationale**: ${rec.rationale}
-**RICE Score**: Reach: ${rec.reach}, Impact: ${rec.impact}, Confidence: ${rec.confidence}, Effort: ${rec.effort}`
+## Competitive Ranking
+${data.competitive_ranking.map((ranking, index) => 
+  `### ${index + 1}. ${ranking.brand} (${ranking.overall_score}/100)
+**Justification**: ${ranking.ranking_justification}
+
+**Score Breakdown**:
+- Sentiment: ${ranking.score_breakdown.sentiment.score}/100 - ${ranking.score_breakdown.sentiment.explanation}
+- Share of Voice: ${ranking.score_breakdown.share_of_voice.score}/100 - ${ranking.score_breakdown.share_of_voice.explanation}
+- AI Readiness: ${ranking.score_breakdown.ai_readiness.score}/100 - ${ranking.score_breakdown.ai_readiness.explanation}
+- SEO Health: ${ranking.score_breakdown.seo_health.score}/100 - ${ranking.score_breakdown.seo_health.explanation}
+- Social Resonance: ${ranking.score_breakdown.social_resonance.score}/100 - ${ranking.score_breakdown.social_resonance.explanation}`
 ).join('\n\n')}
 
 ## Editorial Ideas
 ${data.editorial_ideas.map(idea => 
   `### ${idea.title}
-**Format**: ${idea.format}
+**Format**: ${idea.format.replace('_', ' ').toUpperCase()}
 **Angle**: ${idea.angle}
-**Outline**:
-${idea.outline.map(point => `- ${point}`).join('\n')}`
+**Brand Tone**: ${idea.brand_tone}
+
+**Content Outline**:
+${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
+
+**Sample Copy**:
+> ${idea.sample_copy}`
 ).join('\n\n')}
 `;
 
@@ -145,7 +185,7 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
           <div>
             <h1 className="text-2xl font-bold mb-2">Brand Analysis Report</h1>
             <p className="text-blue-100">
-              Analysis for: <span className="font-semibold">{data.known[0] || 'Unknown Brand'}</span>
+              Analysis for: <span className="font-semibold">{data.competitive_ranking[0]?.brand || 'Unknown Brand'}</span>
             </p>
           </div>
           <div className="flex gap-2">
@@ -203,27 +243,75 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto max-h-screen" role="main">
           <div ref={reportRef}>
-            {/* Overview Section */}
+            {/* Brand Overview Section */}
             {activeSection === 'overview' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Overview</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-blue-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-3">Brand Information</h3>
-                    <p className="text-blue-800">
-                      <strong>Primary Brand:</strong> {data.known[0] || 'N/A'}
-                    </p>
-                    {data.known.length > 1 && (
-                      <p className="text-blue-800 mt-2">
-                        <strong>Related Brands:</strong> {data.known.slice(1).join(', ')}
-                      </p>
-                    )}
+              <div className="space-y-8">
+                {/* Brand Profile */}
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Brand Profile</h2>
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-medium text-gray-900">Category:</span>
+                            <span className="ml-2 text-gray-700">{data.brand_profile.category}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-900">Industry:</span>
+                            <span className="ml-2 text-gray-700">{data.brand_profile.industry}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-900">Target Audience:</span>
+                            <span className="ml-2 text-gray-700">{data.brand_profile.target_audience}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Key Differentiators</h3>
+                        <ul className="list-disc list-inside space-y-1 text-gray-700">
+                          {data.brand_profile.key_differentiators.map((diff, index) => (
+                            <li key={index}>{diff}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-green-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-green-900 mb-3">Analysis Summary</h3>
-                    <p className="text-green-800">
-                      Comprehensive analysis completed across web, news, forums, and social platforms.
-                      Includes competitive ranking, SWOT analysis, and actionable recommendations.
+                </div>
+
+                {/* Competitive Preview */}
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Competitive Landscape Preview</h2>
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Top Competitors</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.competitive_ranking.slice(0, 4).map((ranking, index) => (
+                          <span
+                            key={ranking.brand}
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              index === 0 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`} {ranking.brand} ({ranking.overall_score}/100)
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {data.competitive_landscape}
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Executive Summary</h2>
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {data.executive_summary}
                     </p>
                   </div>
                 </div>
@@ -234,21 +322,59 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
             {activeSection === 'sentiment' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900">Sentiment Analysis</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(data.sentiment_by_channel).map(([channel, score]) => (
-                    <div key={channel} className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 capitalize mb-2">{channel}</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div
-                            className={cn('h-2 rounded-full', getScoreColor(score).split(' ')[1])}
-                            style={{ width: getScoreBarWidth(score) }}
-                          />
+                <div className="space-y-6">
+                  {Object.entries(data.sentiment_analysis).map(([channel, analysis]) => (
+                    <div key={channel} className="bg-white border border-gray-200 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-semibold text-gray-900 capitalize">{channel}</h3>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 bg-gray-200 rounded-full h-3">
+                              <div
+                                className={cn('h-3 rounded-full', getScoreColor(analysis.score).split(' ')[1])}
+                                style={{ width: getScoreBarWidth(analysis.score) }}
+                              />
+                            </div>
+                            <span className={cn('text-lg font-bold', getScoreColor(analysis.score).split(' ')[0])}>
+                              {analysis.score}/100
+                            </span>
+                          </div>
                         </div>
-                        <span className={cn('text-sm font-medium', getScoreColor(score).split(' ')[0])}>
-                          {score}/100
-                        </span>
                       </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Analysis</h4>
+                        <p className="text-gray-700">{analysis.explanation}</p>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Key Insights</h4>
+                        <ul className="list-disc list-inside space-y-1 text-gray-700">
+                          {analysis.key_insights.map((insight: string, index: number) => (
+                            <li key={index}>{insight}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      {analysis.sources.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Sources</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.sources.map((source: string, index: number) => (
+                              <a
+                                key={index}
+                                href={source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                              >
+                                <ExternalLink className="w-3 h-3 inline mr-1" />
+                                Source {index + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -261,29 +387,80 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
                 <h2 className="text-2xl font-bold text-gray-900">SWOT Analysis</h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
-                    { key: 's', title: 'Strengths', color: 'green', items: data.swot.s },
-                    { key: 'w', title: 'Weaknesses', color: 'red', items: data.swot.w },
-                    { key: 'o', title: 'Opportunities', color: 'blue', items: data.swot.o },
-                    { key: 't', title: 'Threats', color: 'orange', items: data.swot.t },
-                  ].map(({ key, title, color, items }) => (
-                    <div key={key} className={`bg-${color}-50 p-6 rounded-lg`}>
-                      <h3 className={`text-lg font-semibold text-${color}-900 mb-4`}>{title}</h3>
-                      <div className="space-y-3">
+                    { key: 'strengths', title: 'Strengths', items: data.swot_analysis.strengths },
+                    { key: 'weaknesses', title: 'Weaknesses', items: data.swot_analysis.weaknesses },
+                    { key: 'opportunities', title: 'Opportunities', items: data.swot_analysis.opportunities },
+                    { key: 'threats', title: 'Threats', items: data.swot_analysis.threats },
+                  ].map(({ key, title, items }) => (
+                    <div key={key} className={cn(
+                      'p-6 rounded-lg',
+                      key === 'strengths' ? 'bg-green-50' :
+                      key === 'weaknesses' ? 'bg-red-50' :
+                      key === 'opportunities' ? 'bg-blue-50' :
+                      'bg-orange-50'
+                    )}>
+                      <h3 className={cn(
+                        'text-lg font-semibold mb-4',
+                        key === 'strengths' ? 'text-green-900' :
+                        key === 'weaknesses' ? 'text-red-900' :
+                        key === 'opportunities' ? 'text-blue-900' :
+                        'text-orange-900'
+                      )}>{title}</h3>
+                      <div className="space-y-4">
                         {items.map((item, index) => (
-                          <div key={index} className={`bg-white p-4 rounded-lg border border-${color}-200`}>
-                            <p className={`text-${color}-800 font-medium mb-2`}>{item.summary}</p>
-                            <p className={`text-${color}-700 text-sm`}>{item.rationale}</p>
-                            {item.citations.length > 0 && (
-                              <div className="mt-2">
-                                <p className={`text-xs text-${color}-600`}>Sources:</p>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {item.citations.slice(0, 3).map((citation, i) => (
+                          <div key={index} className={cn(
+                            'bg-white p-4 rounded-lg border',
+                            key === 'strengths' ? 'border-green-200' :
+                            key === 'weaknesses' ? 'border-red-200' :
+                            key === 'opportunities' ? 'border-blue-200' :
+                            'border-orange-200'
+                          )}>
+                            <p className={cn(
+                              'font-semibold mb-2',
+                              key === 'strengths' ? 'text-green-900' :
+                              key === 'weaknesses' ? 'text-red-900' :
+                              key === 'opportunities' ? 'text-blue-900' :
+                              'text-orange-900'
+                            )}>{item.summary}</p>
+                            <p className={cn(
+                              'text-sm mb-2',
+                              key === 'strengths' ? 'text-green-800' :
+                              key === 'weaknesses' ? 'text-red-800' :
+                              key === 'opportunities' ? 'text-blue-800' :
+                              'text-orange-800'
+                            )}>{item.rationale}</p>
+                            <div className={cn(
+                              'text-sm mb-3',
+                              key === 'strengths' ? 'text-green-800' :
+                              key === 'weaknesses' ? 'text-red-800' :
+                              key === 'opportunities' ? 'text-blue-800' :
+                              'text-orange-800'
+                            )}>
+                              <strong>Competitor Context:</strong> {item.competitor_context}
+                            </div>
+                            {item.sources.length > 0 && (
+                              <div>
+                                <p className={cn(
+                                  'text-xs mb-1',
+                                  key === 'strengths' ? 'text-green-700' :
+                                  key === 'weaknesses' ? 'text-red-700' :
+                                  key === 'opportunities' ? 'text-blue-700' :
+                                  'text-orange-700'
+                                )}>Sources:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {item.sources.slice(0, 3).map((source, i) => (
                                     <a
                                       key={i}
-                                      href={citation}
+                                      href={source}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className={`text-xs px-2 py-1 bg-${color}-100 text-${color}-700 rounded hover:bg-${color}-200 transition-colors`}
+                                      className={cn(
+                                        'text-xs px-2 py-1 rounded transition-colors',
+                                        key === 'strengths' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                        key === 'weaknesses' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                                        key === 'opportunities' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                        'bg-orange-100 text-orange-800 hover:bg-orange-200'
+                                      )}
                                     >
                                       <ExternalLink className="w-3 h-3 inline mr-1" />
                                       Source {i + 1}
@@ -305,134 +482,73 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
             {activeSection === 'competitive' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900">Competitive Ranking</h2>
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Rank
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Brand
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Overall Score
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Sentiment
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Share of Voice
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            AI Readiness
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            SEO Health
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Social Resonance
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {data.competitive_ranking.map((ranking, index) => (
-                          <tr key={ranking.brand} className={index === 0 ? 'bg-yellow-50' : ''}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {ranking.brand}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2 w-20">
-                                  <div
-                                    className={cn('h-2 rounded-full', getScoreColor(ranking.overall).split(' ')[1])}
-                                    style={{ width: getScoreBarWidth(ranking.overall) }}
-                                  />
-                                </div>
-                                <span className={cn('text-sm font-medium', getScoreColor(ranking.overall).split(' ')[0])}>
-                                  {ranking.overall}/100
-                                </span>
+                <div className="space-y-6">
+                  {data.competitive_ranking.map((ranking, index) => (
+                    <div key={ranking.brand} className={`bg-white border border-gray-200 rounded-lg p-6 ${index === 0 ? 'ring-2 ring-yellow-400' : ''}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                          </span>
+                          <h3 className="text-xl font-bold text-gray-900">{ranking.brand}</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-3">
+                            <div
+                              className={cn('h-3 rounded-full', getScoreColor(ranking.overall_score).split(' ')[1])}
+                              style={{ width: getScoreBarWidth(ranking.overall_score) }}
+                            />
+                          </div>
+                          <span className={cn('text-lg font-bold', getScoreColor(ranking.overall_score).split(' ')[0])}>
+                            {ranking.overall_score}/100
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Ranking Justification</h4>
+                        <p className="text-gray-700">{ranking.ranking_justification}</p>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                        {Object.entries(ranking.score_breakdown).map(([metric, data]) => (
+                          <div key={metric} className="bg-gray-50 p-3 rounded-lg">
+                            <h5 className="font-medium text-gray-900 capitalize mb-1">
+                              {metric.replace('_', ' ')}
+                            </h5>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={cn('h-2 rounded-full', getScoreColor(data.score).split(' ')[1])}
+                                  style={{ width: getScoreBarWidth(data.score) }}
+                                />
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {ranking.scores.sentiment}/100
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {ranking.scores.sov}/100
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {ranking.scores.ai_readiness}/100
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {ranking.scores.seo_health}/100
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {ranking.scores.social_resonance}/100
-                            </td>
-                          </tr>
+                              <span className={cn('text-sm font-medium', getScoreColor(data.score).split(' ')[0])}>
+                                {data.score}/100
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600">{data.explanation}</p>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Recommendations Section */}
-            {activeSection === 'recommendations' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Recommendations</h2>
-                <div className="space-y-4">
-                  {data.recommendations.map((rec, index) => (
-                    <div key={index} className="bg-white border border-gray-200 p-6 rounded-lg">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">{rec.title}</h3>
-                        <span className={cn(
-                          'px-3 py-1 rounded-full text-xs font-medium',
-                          rec.channel === 'ai' ? 'bg-purple-100 text-purple-800' :
-                          rec.channel === 'seo' ? 'bg-green-100 text-green-800' :
-                          'bg-blue-100 text-blue-800'
-                        )}>
-                          {rec.channel.toUpperCase()}
-                        </span>
                       </div>
-                      <p className="text-gray-700 mb-4">{rec.rationale}</p>
-                      <div className="grid grid-cols-4 gap-4 mb-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{rec.reach}</div>
-                          <div className="text-xs text-gray-500">Reach</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">{rec.impact}</div>
-                          <div className="text-xs text-gray-500">Impact</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-yellow-600">{rec.confidence}</div>
-                          <div className="text-xs text-gray-500">Confidence</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-red-600">{rec.effort}</div>
-                          <div className="text-xs text-gray-500">Effort</div>
-                        </div>
-                      </div>
-                      {rec.citations.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {rec.citations.slice(0, 3).map((citation, i) => (
-                            <a
-                              key={i}
-                              href={citation}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-                            >
-                              <ExternalLink className="w-3 h-3 inline mr-1" />
-                              Source {i + 1}
-                            </a>
-                          ))}
+                      
+                      {ranking.sources.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Sources</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {ranking.sources.map((source, i) => (
+                              <a
+                                key={i}
+                                href={source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                              >
+                                <ExternalLink className="w-3 h-3 inline mr-1" />
+                                Source {i + 1}
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -441,17 +557,18 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
               </div>
             )}
 
+
             {/* Editorial Ideas Section */}
             {activeSection === 'editorial' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900">Editorial Ideas</h2>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {data.editorial_ideas.map((idea, index) => (
                     <div key={index} className="bg-white border border-gray-200 p-6 rounded-lg">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">{idea.title}</h3>
+                      <div className="flex items-start justify-between mb-4">
+                        <h3 className="text-xl font-semibold text-gray-900">{idea.title}</h3>
                         <span className={cn(
-                          'px-3 py-1 rounded-full text-xs font-medium',
+                          'px-3 py-1 rounded-full text-sm font-medium',
                           idea.format === 'faq' ? 'bg-blue-100 text-blue-800' :
                           idea.format === 'blog' ? 'bg-green-100 text-green-800' :
                           'bg-purple-100 text-purple-800'
@@ -459,94 +576,40 @@ ${idea.outline.map(point => `- ${point}`).join('\n')}`
                           {idea.format.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-gray-700 mb-4">{idea.angle}</p>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Outline:</h4>
-                        <ul className="list-disc list-inside space-y-1 text-gray-700">
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Angle</h4>
+                        <p className="text-gray-700">{idea.angle}</p>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Brand Tone</h4>
+                        <p className="text-gray-700">{idea.brand_tone}</p>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Content Outline</h4>
+                        <ol className="list-decimal list-inside space-y-1 text-gray-700">
                           {idea.outline.map((point, i) => (
                             <li key={i}>{point}</li>
                           ))}
-                        </ul>
+                        </ol>
                       </div>
-                      {idea.citations.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {idea.citations.slice(0, 3).map((citation, i) => (
-                            <a
-                              key={i}
-                              href={citation}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-                            >
-                              <ExternalLink className="w-3 h-3 inline mr-1" />
-                              Source {i + 1}
-                            </a>
-                          ))}
+                      
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Sample Copy</h4>
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <p className="text-gray-700 italic leading-relaxed whitespace-pre-line">
+                            {idea.sample_copy}
+                          </p>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Schema Analysis Section */}
-            {activeSection === 'metadata' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Schema.org Analysis</h2>
-                <div className="space-y-4">
-                  {data.metadata.map((meta, index) => (
-                    <div key={index} className="bg-white border border-gray-200 p-6 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        <a href={meta.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
-                          {meta.url} <ExternalLink className="w-4 h-4 inline ml-1" />
-                        </a>
-                      </h3>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Basic Metadata</h4>
-                          {meta.title && (
-                            <p className="text-sm text-gray-700 mb-1">
-                              <strong>Title:</strong> {meta.title}
-                            </p>
-                          )}
-                          {meta.description && (
-                            <p className="text-sm text-gray-700">
-                              <strong>Description:</strong> {meta.description}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Structured Data</h4>
-                          <div className="space-y-1">
-                            {meta.organization && (
-                              <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                                Organization
-                              </span>
-                            )}
-                            {meta.product && (
-                              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded ml-1">
-                                Product
-                              </span>
-                            )}
-                            {meta.faqPage && (
-                              <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded ml-1">
-                                FAQ Page
-                              </span>
-                            )}
-                            {meta.review && (
-                              <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded ml-1">
-                                Review
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </main>
       </div>

@@ -5,76 +5,96 @@ export interface BrandAnalysisRequest {
   sinceDays?: number;
 }
 
-export interface SentimentByChannel {
-  web: number;
-  news: number;
-  forums: number;
-  social: number;
+export interface SentimentChannel {
+  score: number;
+  explanation: string;
+  key_insights: string[];
+  sources: string[];
+}
+
+export interface SentimentAnalysis {
+  web: SentimentChannel;
+  news: SentimentChannel;
+  forums: SentimentChannel;
+  social: SentimentChannel;
 }
 
 export interface SWOTItem {
   summary: string;
   rationale: string;
-  citations: string[];
+  competitor_context: string;
+  sources: string[];
 }
 
 export interface SWOTAnalysis {
-  s: SWOTItem[];
-  w: SWOTItem[];
-  o: SWOTItem[];
-  t: SWOTItem[];
+  strengths: SWOTItem[];
+  weaknesses: SWOTItem[];
+  opportunities: SWOTItem[];
+  threats: SWOTItem[];
 }
 
-export interface CompetitiveScore {
-  sentiment: number;
-  sov: number; // Share of Voice
-  ai_readiness: number;
-  seo_health: number;
-  social_resonance: number;
+export interface ScoreBreakdown {
+  sentiment: { score: number; explanation: string };
+  share_of_voice: { score: number; explanation: string };
+  ai_readiness: { score: number; explanation: string };
+  seo_health: { score: number; explanation: string };
+  social_resonance: { score: number; explanation: string };
 }
 
 export interface CompetitiveRanking {
   brand: string;
-  scores: CompetitiveScore;
-  overall: number;
-  citations: string[];
+  overall_score: number;
+  score_breakdown: ScoreBreakdown;
+  ranking_justification: string;
+  sources: string[];
 }
 
 export interface Recommendation {
   title: string;
-  rationale: string;
+  description: string;
   channel: 'ai' | 'seo' | 'social';
-  reach: number;
-  impact: number;
-  confidence: number;
-  effort: number;
-  citations: string[];
+  impact_score: number;
+  effort_score: number;
+  time_estimate: string;
+  complexity_level: 'low' | 'medium' | 'high';
+  step_by_step_guide: string[];
+  expected_outcomes: string;
+  sources: string[];
 }
 
 export interface EditorialIdea {
   format: 'faq' | 'blog' | 'short_social';
   title: string;
   angle: string;
+  brand_tone: string;
   outline: string[];
-  citations: string[];
+  sample_copy: string;
+}
+
+export interface BrandProfile {
+  category: string;
+  industry: string;
+  target_audience: string;
+  key_differentiators: string[];
 }
 
 export interface BrandAnalysisResponse {
-  known: string[];
-  sentiment_by_channel: SentimentByChannel;
-  swot: SWOTAnalysis;
+  brand_profile: BrandProfile;
+  executive_summary: string;
+  competitive_landscape: string;
+  sentiment_analysis: SentimentAnalysis;
+  swot_analysis: SWOTAnalysis;
   competitive_ranking: CompetitiveRanking[];
-  recommendations: Recommendation[];
   editorial_ideas: EditorialIdea[];
 }
 
 export interface SchemaMetadata {
   title?: string;
   description?: string;
-  organization?: any;
-  product?: any;
-  faqPage?: any;
-  review?: any;
+  organization?: Record<string, unknown>;
+  product?: Record<string, unknown>;
+  faqPage?: Record<string, unknown>;
+  review?: Record<string, unknown>;
   url: string;
 }
 

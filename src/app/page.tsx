@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, FileText, FileDown } from 'lucide-react';
+import { Search, Download, FileText } from 'lucide-react';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import BrandAnalysisForm from '@/components/BrandAnalysisForm';
 import BrandReport from '@/components/BrandReport';
-import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [analysisData, setAnalysisData] = useState<BrandAnalysisWithMetadata | null>(null);
@@ -53,7 +52,7 @@ export default function Home() {
             Brand Insights MVP
           </h1>
           <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-            Analyze your brand's online presence, competitive positioning, and discover 
+            Analyze your brand&apos;s online presence, competitive positioning, and discover 
             opportunities to improve AI-search visibility, SEO, and social resonance.
           </p>
         </header>
@@ -92,7 +91,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Web Search Analysis</h3>
                 <p className="text-gray-700">
-                  Comprehensive analysis across web, news, forums, and social platforms using OpenAI's web search.
+                  Comprehensive analysis across web, news, forums, and social platforms using OpenAI&apos;s web search.
                 </p>
               </div>
 

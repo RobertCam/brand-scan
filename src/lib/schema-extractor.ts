@@ -43,7 +43,7 @@ export async function extractSchemaMetadata(url: string): Promise<SchemaMetadata
     $('[itemscope]').each((_, element) => {
       const itemType = $(element).attr('itemtype');
       if (itemType?.includes('schema.org')) {
-        const microdata = extractMicrodata($, element);
+        const microdata = extractMicrodata($ as cheerio.CheerioAPI, element);
         extractSchemaType(microdata, metadata);
       }
     });
@@ -55,7 +55,7 @@ export async function extractSchemaMetadata(url: string): Promise<SchemaMetadata
   }
 }
 
-function extractSchemaType(data: any, metadata: SchemaMetadata) {
+function extractSchemaType(data: Record<string, unknown>, metadata: SchemaMetadata) {
   if (!data['@type']) return;
 
   const type = Array.isArray(data['@type']) ? data['@type'][0] : data['@type'];
@@ -77,8 +77,8 @@ function extractSchemaType(data: any, metadata: SchemaMetadata) {
   }
 }
 
-function extractMicrodata($: cheerio.CheerioAPI, element: cheerio.Element): any {
-  const result: any = {};
+function extractMicrodata($: cheerio.CheerioAPI, element: cheerio.Element): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   
   const itemType = $(element).attr('itemtype');
   if (itemType) {
