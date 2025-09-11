@@ -3,6 +3,7 @@ export interface BrandAnalysisRequest {
   competitors?: string[];
   region?: string;
   sinceDays?: number;
+  roastMode?: boolean;
 }
 
 export interface SentimentChannel {
@@ -100,5 +101,7 @@ export interface SchemaMetadata {
 
 export interface BrandAnalysisWithMetadata extends BrandAnalysisResponse {
   metadata: SchemaMetadata[];
+  roastMode?: boolean;
+  inputBrand?: string;
 }
 

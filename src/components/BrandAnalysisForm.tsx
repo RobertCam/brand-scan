@@ -10,6 +10,7 @@ interface BrandAnalysisFormProps {
     competitors: string[];
     region: string;
     sinceDays: number;
+    roastMode: boolean;
   }) => void;
   isLoading: boolean;
 }
@@ -19,6 +20,7 @@ export default function BrandAnalysisForm({ onSubmit, isLoading }: BrandAnalysis
   const [competitors, setCompetitors] = useState<string[]>(['']);
   const [region, setRegion] = useState('global');
   const [sinceDays, setSinceDays] = useState(30);
+  const [roastMode, setRoastMode] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,7 @@ export default function BrandAnalysisForm({ onSubmit, isLoading }: BrandAnalysis
       competitors: filteredCompetitors,
       region,
       sinceDays,
+      roastMode,
     });
   };
 
@@ -147,6 +150,31 @@ export default function BrandAnalysisForm({ onSubmit, isLoading }: BrandAnalysis
             <option value={365}>Last year</option>
           </select>
         </div>
+      </div>
+
+      {/* Burn Report Toggle */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">🔥 Burn Report</h3>
+            <p className="text-sm text-gray-600">
+              Get a hilarious, no-holds-barred teardown of your brand. Perfect for teams who can laugh at themselves!
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={roastMode}
+              onChange={(e) => setRoastMode(e.target.checked)}
+              className="sr-only peer"
+              aria-describedby="roast-mode-help"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+          </label>
+        </div>
+        <p id="roast-mode-help" className="mt-2 text-xs text-gray-500">
+          {roastMode ? "🔥 Burn Report enabled - prepare for some good-natured roasting!" : "Standard professional analysis"}
+        </p>
       </div>
 
       <button

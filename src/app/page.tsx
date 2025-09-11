@@ -16,6 +16,7 @@ export default function Home() {
     competitors: string[];
     region: string;
     sinceDays: number;
+    roastMode: boolean;
   }) => {
     setIsLoading(true);
     setError(null);

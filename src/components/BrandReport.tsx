@@ -14,6 +14,9 @@ interface BrandReportProps {
 export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const reportRef = useRef<HTMLDivElement>(null);
+  
+  // Sort competitive ranking by overall score (highest first)
+  const sortedCompetitiveRanking = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
 
   const sections = [
     { id: 'overview', title: 'Brand Overview', icon: '📊' },
@@ -33,7 +36,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
 
     // Add title
     pdf.setFontSize(24);
-    pdf.text('Brand Scan Report', margin, 30);
+    pdf.text(data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report', margin, 30);
 
     // Add content (simplified for PDF)
     pdf.setFontSize(12);
@@ -71,7 +74,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     yPosition += 10;
 
     pdf.setFontSize(12);
-    data.competitive_ranking.forEach((ranking, index) => {
+    sortedCompetitiveRanking.forEach((ranking, index) => {
       pdf.text(`${index + 1}. ${ranking.brand} - Score: ${ranking.overall_score}/100`, margin, yPosition);
       yPosition += 6;
     });
@@ -80,7 +83,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   };
 
   const exportToMarkdown = () => {
-    const markdown = `# Brand Scan Report
+    const markdown = `# ${data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report'}
 
 ## Brand Profile
 - **Category**: ${data.brand_profile.category}
@@ -130,7 +133,7 @@ ${data.swot_analysis.threats.map(item =>
 ).join('\n\n')}
 
 ## Competitive Ranking
-${data.competitive_ranking.map((ranking, index) => 
+${sortedCompetitiveRanking.map((ranking, index) => 
   `### ${index + 1}. ${ranking.brand} (${ranking.overall_score}/100)
 **Justification**: ${ranking.ranking_justification}
 
@@ -180,12 +183,14 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+      <header className={`bg-gradient-to-r ${data.roastMode ? 'from-orange-600 to-red-600' : 'from-blue-600 to-blue-700'} text-white p-6`}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Brand Scan Report</h1>
+            <h1 className="text-2xl font-bold mb-2">
+              {data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report'}
+            </h1>
             <p className="text-blue-100">
-              Analysis for: <span className="font-semibold">{data.competitive_ranking[0]?.brand || 'Unknown Brand'}</span>
+              Analysis for: <span className="font-semibold">{data.inputBrand || 'Unknown Brand'}</span>
             </p>
           </div>
           <div className="flex gap-2">
@@ -287,7 +292,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">Top Competitors</h3>
                       <div className="flex flex-wrap gap-2">
-                        {data.competitive_ranking.slice(0, 4).map((ranking, index) => (
+                        {sortedCompetitiveRanking.slice(0, 4).map((ranking, index) => (
                           <span
                             key={ranking.brand}
                             className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -483,7 +488,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900">Competitive Ranking</h2>
                 <div className="space-y-6">
-                  {data.competitive_ranking.map((ranking, index) => (
+                  {sortedCompetitiveRanking.map((ranking, index) => (
                     <div key={ranking.brand} className={`bg-white border border-gray-200 rounded-lg p-6 ${index === 0 ? 'ring-2 ring-yellow-400' : ''}`}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
