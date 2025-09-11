@@ -33,7 +33,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
 
     // Add title
     pdf.setFontSize(24);
-    pdf.text('Brand Analysis Report', margin, 30);
+    pdf.text('Brand Scan Report', margin, 30);
 
     // Add content (simplified for PDF)
     pdf.setFontSize(12);
@@ -76,11 +76,11 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
       yPosition += 6;
     });
 
-    pdf.save('brand-analysis-report.pdf');
+    pdf.save('brand-scan-report.pdf');
   };
 
   const exportToMarkdown = () => {
-    const markdown = `# Brand Analysis Report
+    const markdown = `# Brand Scan Report
 
 ## Brand Profile
 - **Category**: ${data.brand_profile.category}
@@ -180,10 +180,10 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Brand Analysis Report</h1>
+            <h1 className="text-2xl font-bold mb-2">Brand Scan Report</h1>
             <p className="text-blue-100">
               Analysis for: <span className="font-semibold">{data.competitive_ranking[0]?.brand || 'Unknown Brand'}</span>
             </p>
@@ -217,16 +217,16 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Sidebar Navigation */}
-        <nav className="w-64 bg-gray-50 border-r border-gray-200 p-4" aria-label="Report sections">
-          <div className="space-y-1">
+        <nav className="w-full lg:w-80 bg-gray-50 border-r border-gray-200 p-4" aria-label="Report sections">
+          <div className="space-y-1 lg:space-y-1 flex flex-wrap lg:flex-col gap-2 lg:gap-0">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                  'w-full lg:w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap',
                   activeSection === section.id
                     ? 'bg-blue-100 text-blue-800 font-semibold'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -241,7 +241,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto max-h-screen" role="main">
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto max-h-screen" role="main">
           <div ref={reportRef}>
             {/* Brand Overview Section */}
             {activeSection === 'overview' && (

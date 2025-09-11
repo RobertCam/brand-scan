@@ -168,12 +168,12 @@ export default function BrandAnalysisForm({ onSubmit, isLoading }: BrandAnalysis
         ) : (
           <>
             <Search className="w-5 h-5" />
-            Analyze Brand
+            Scan Brand
           </>
         )}
       </button>
       <p id="submit-help" className="mt-2 text-sm text-gray-600">
-        {isLoading ? 'Please wait while we analyze your brand...' : 'Click to start the brand analysis process'}
+        {isLoading ? 'Please wait while we scan your brand...' : 'Click to start the brand scan process'}
       </p>
     </form>
   );
