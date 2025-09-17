@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { ArrowLeft, FileText, ExternalLink } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,14 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
 
 
   const exportToMarkdown = () => {
+    // Track export action
+    track('report_exported', {
+      format: 'markdown',
+      brand: data.inputBrand,
+      roast_mode: data.roastMode,
+      analysis_type: data.roastMode ? 'burn_report' : 'professional',
+    });
+
     const markdown = `# ${data.roastMode ? '🔥 Brand Burn Report' : 'Brand Scan Report'}
 
 ## Brand Profile
@@ -147,7 +156,13 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
               Export Markdown
             </button>
             <button
-              onClick={onNewAnalysis}
+              onClick={() => {
+                track('new_analysis_started', {
+                  previous_brand: data.inputBrand,
+                  previous_roast_mode: data.roastMode,
+                });
+                onNewAnalysis();
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
               aria-label="Start new brand analysis"
             >

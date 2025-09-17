@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { track } from '@vercel/analytics';
 // Removed unused imports: Search, Download, FileText
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import BrandAnalysisForm from '@/components/BrandAnalysisForm';
@@ -22,6 +23,14 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
 
+    // Track analysis start
+    track('brand_analysis_started', {
+      brand: formData.brand,
+      competitors_count: formData.competitors.length,
+      region: formData.region,
+      roast_mode: formData.roastMode,
+    });
+
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -38,8 +47,22 @@ export default function Home() {
 
       const data = await response.json();
       setAnalysisData(data);
+      
+      // Track successful analysis completion
+      track('brand_analysis_completed', {
+        brand: formData.brand,
+        roast_mode: formData.roastMode,
+        analysis_type: formData.roastMode ? 'burn_report' : 'professional',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      
+      // Track analysis failure
+      track('brand_analysis_failed', {
+        brand: formData.brand,
+        roast_mode: formData.roastMode,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
     } finally {
       setIsLoading(false);
     }
