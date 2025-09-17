@@ -28,7 +28,7 @@ export default function Home() {
       brand: formData.brand,
       competitors_count: formData.competitors.length,
       region: formData.region,
-      roast_mode: formData.roastMode,
+      roast_mode: formData.roastMode || false,
     });
 
     try {
@@ -51,7 +51,7 @@ export default function Home() {
       // Track successful analysis completion
       track('brand_analysis_completed', {
         brand: formData.brand,
-        roast_mode: formData.roastMode,
+        roast_mode: formData.roastMode || false,
         analysis_type: formData.roastMode ? 'burn_report' : 'professional',
       });
     } catch (err) {
@@ -60,7 +60,7 @@ export default function Home() {
       // Track analysis failure
       track('brand_analysis_failed', {
         brand: formData.brand,
-        roast_mode: formData.roastMode,
+        roast_mode: formData.roastMode || false,
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     } finally {

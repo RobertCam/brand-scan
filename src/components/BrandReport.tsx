@@ -31,8 +31,8 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     // Track export action
     track('report_exported', {
       format: 'markdown',
-      brand: data.inputBrand,
-      roast_mode: data.roastMode,
+      brand: data.inputBrand || 'unknown',
+      roast_mode: data.roastMode || false,
       analysis_type: data.roastMode ? 'burn_report' : 'professional',
     });
 
@@ -158,8 +158,8 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
             <button
               onClick={() => {
                 track('new_analysis_started', {
-                  previous_brand: data.inputBrand,
-                  previous_roast_mode: data.roastMode,
+                  previous_brand: data.inputBrand || 'unknown',
+                  previous_roast_mode: data.roastMode || false,
                 });
                 onNewAnalysis();
               }}
