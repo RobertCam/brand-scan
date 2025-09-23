@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ArrowLeft, FileText, ExternalLink } from 'lucide-react';
+import { ArrowLeft, FileText, ExternalLink, MessageCircle } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
+import ChatDrawer from './ChatDrawer';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -13,6 +14,7 @@ interface BrandReportProps {
 
 export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const [activeSection, setActiveSection] = useState('overview');
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   
   // Sort competitive ranking by overall score (highest first)
@@ -147,6 +149,20 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
             </p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => {
+                track('chat_opened', {
+                  brand: data.inputBrand || 'unknown',
+                  roast_mode: data.roastMode || false,
+                });
+                setIsChatOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
+              aria-label="Ask questions about the report"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Ask Questions
+            </button>
             <button
               onClick={exportToMarkdown}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
@@ -569,7 +585,15 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
           </div>
         </main>
       </div>
+
+      {/* Chat Drawer */}
+      <ChatDrawer 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        reportData={data}
+      />
     </div>
   );
 }
+
 

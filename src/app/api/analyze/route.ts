@@ -249,16 +249,37 @@ export async function POST(request: NextRequest) {
 
     let analysisData: BrandAnalysisResponse;
     try {
-      // Try to extract JSON from markdown if present
-      let jsonContent = content;
+      // Try multiple methods to extract JSON
+      let jsonContent = content.trim();
+      
+      // Method 1: Extract from markdown code blocks
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
-        jsonContent = jsonMatch[1];
+        jsonContent = jsonMatch[1].trim();
       }
       
+      // Method 2: Extract from any code blocks
+      const codeMatch = content.match(/```\s*([\s\S]*?)\s*```/);
+      if (codeMatch && !jsonMatch) {
+        jsonContent = codeMatch[1].trim();
+      }
+      
+      // Method 3: Look for JSON object boundaries
+      const jsonStart = jsonContent.indexOf('{');
+      const jsonEnd = jsonContent.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonContent = jsonContent.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      console.log('Raw OpenAI content:', content);
+      console.log('Extracted JSON content:', jsonContent);
+      
       analysisData = JSON.parse(jsonContent);
-    } catch {
-      console.error('Failed to parse OpenAI response:', content);
+    } catch (error) {
+      console.error('Failed to parse OpenAI response:', error);
+      console.error('Raw content:', content);
+      console.error('Content length:', content.length);
+      console.error('First 500 chars:', content.substring(0, 500));
       throw new Error('Invalid JSON response from OpenAI');
     }
 
