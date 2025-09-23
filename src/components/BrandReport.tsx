@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, FileText, ExternalLink, MessageCircle } from 'lucide-react';
+import { ArrowLeft, FileText, ExternalLink, MessageCircle, Palette } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
 import ChatDrawer from './ChatDrawer';
+import ColorPicker from './ColorPicker';
 import { DynamicChart, SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
+import { ChartColorSettings, DEFAULT_COLOR_SETTINGS, getThemeColors } from '@/lib/chart-themes';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -40,6 +42,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     };
   }>>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [colorSettings, setColorSettings] = useState<ChartColorSettings>(DEFAULT_COLOR_SETTINGS);
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Load chat preference from localStorage on component mount
@@ -54,6 +57,23 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   useEffect(() => {
     localStorage.setItem('chat-drawer-open', JSON.stringify(isChatOpen));
   }, [isChatOpen]);
+
+  // Load color settings from localStorage on component mount
+  useEffect(() => {
+    const savedColorSettings = localStorage.getItem(`chart-colors-${data.inputBrand}`);
+    if (savedColorSettings) {
+      try {
+        setColorSettings(JSON.parse(savedColorSettings));
+      } catch (error) {
+        console.error('Error loading color settings:', error);
+      }
+    }
+  }, [data.inputBrand]);
+
+  // Save color settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(`chart-colors-${data.inputBrand}`, JSON.stringify(colorSettings));
+  }, [colorSettings, data.inputBrand]);
   
   // Sort competitive ranking by overall score (highest first)
   const sortedCompetitiveRanking = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
@@ -125,6 +145,31 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
       brand: data.inputBrand || 'unknown',
       roast_mode: data.roastMode || false,
     });
+  };
+
+  // Get colors for a specific chart
+  const getChartColors = (chartId: string) => {
+    if (colorSettings.applyToAllCharts) {
+      return getThemeColors(colorSettings.themeId, colorSettings.customColors).primary;
+    }
+    
+    const chartSpecificColors = colorSettings.chartSpecificColors?.[chartId];
+    if (chartSpecificColors && chartSpecificColors.length > 0) {
+      return chartSpecificColors;
+    }
+    
+    return getThemeColors(colorSettings.themeId, colorSettings.customColors).primary;
+  };
+
+  // Update colors for a specific chart
+  const updateChartColors = (chartId: string, colors: string[]) => {
+    setColorSettings(prev => ({
+      ...prev,
+      chartSpecificColors: {
+        ...prev.chartSpecificColors,
+        [chartId]: colors
+      }
+    }));
   };
 
   const sections = [
@@ -726,9 +771,36 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-900">📌 Pinned Charts</h2>
-                  <p className="text-sm text-gray-600">
-                    Charts you&apos;ve pinned from chat conversations
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <p className="text-sm text-gray-600">
+                      Charts you&apos;ve pinned from chat conversations
+                    </p>
+                    {pinnedCharts.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <ColorPicker
+                          selectedColors={getChartColors('global')}
+                          onColorsChange={(colors) => {
+                            setColorSettings(prev => ({
+                              ...prev,
+                              customColors: colors,
+                              applyToAllCharts: true
+                            }));
+                          }}
+                        />
+                        <button
+                          onClick={() => setColorSettings(prev => ({ ...prev, applyToAllCharts: !prev.applyToAllCharts }))}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            colorSettings.applyToAllCharts
+                              ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200'
+                          }`}
+                        >
+                          <Palette className="w-4 h-4 inline mr-1" />
+                          {colorSettings.applyToAllCharts ? 'Global Colors' : 'Individual Colors'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 {pinnedCharts.length === 0 ? (
@@ -757,13 +829,22 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                               Pinned on {new Date(chart.pinnedAt).toLocaleDateString()}
                             </p>
                           </div>
-                          <button
-                            onClick={() => handleUnpinChart(chart.id)}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                            title="Remove this chart from pinned charts"
-                          >
-                            🗑️ Remove
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {!colorSettings.applyToAllCharts && (
+                              <ColorPicker
+                                selectedColors={getChartColors(chart.id)}
+                                onColorsChange={(colors) => updateChartColors(chart.id, colors)}
+                                className="scale-90"
+                              />
+                            )}
+                            <button
+                              onClick={() => handleUnpinChart(chart.id)}
+                              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                              title="Remove this chart from pinned charts"
+                            >
+                              🗑️ Remove
+                            </button>
+                          </div>
                         </div>
                         
                         {/* Render the chart using original components for prebuilt charts */}
@@ -784,6 +865,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                             description=""
                             chartData={chart.chartData}
                             className="border-0 p-0"
+                            customColors={getChartColors(chart.id)}
                           />
                         )}
                         

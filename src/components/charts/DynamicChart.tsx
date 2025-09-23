@@ -22,11 +22,14 @@ interface DynamicChartProps {
     points?: Array<{x: number, y: number, label: string}>;
   };
   className?: string;
+  customColors?: string[];
 }
 
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
 
-export default function DynamicChart({ type, title, description, chartData, className = '' }: DynamicChartProps) {
+export default function DynamicChart({ type, title, description, chartData, className = '', customColors }: DynamicChartProps) {
+  // Use custom colors if provided, otherwise fall back to default colors
+  const colors = customColors && customColors.length > 0 ? customColors : COLORS;
   const renderMatrix = () => {
     if (!chartData?.matrix || !chartData?.categories || !chartData?.values) {
       return <div className="text-gray-500">Matrix data not available</div>;
@@ -102,7 +105,7 @@ export default function DynamicChart({ type, title, description, chartData, clas
             <XAxis dataKey="x" name="X Axis" />
             <YAxis dataKey="y" name="Y Axis" />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter dataKey="y" fill="#3B82F6" />
+            <Scatter dataKey="y" fill={colors[0]} />
           </ScatterChart>
         </ResponsiveContainer>
       </div>
@@ -124,8 +127,6 @@ export default function DynamicChart({ type, title, description, chartData, clas
       });
       return dataPoint;
     });
-
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
     return (
       <div className="space-y-4">
@@ -168,8 +169,6 @@ export default function DynamicChart({ type, title, description, chartData, clas
       });
       return dataPoint;
     });
-
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
     return (
       <div className="space-y-4">
@@ -230,7 +229,7 @@ export default function DynamicChart({ type, title, description, chartData, clas
               dataKey="value"
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Pie>
             <Tooltip />
@@ -263,7 +262,7 @@ export default function DynamicChart({ type, title, description, chartData, clas
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Area type="monotone" dataKey="value" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
+            <Area type="monotone" dataKey="value" stroke={colors[0]} fill={colors[0]} fillOpacity={0.3} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -285,8 +284,6 @@ export default function DynamicChart({ type, title, description, chartData, clas
       });
       return dataPoint;
     });
-
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
     return (
       <div className="space-y-4">
