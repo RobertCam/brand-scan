@@ -17,7 +17,21 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [pinnedCharts, setPinnedCharts] = useState<any[]>([]);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Load chat preference from localStorage on component mount
+  useEffect(() => {
+    const savedChatPreference = localStorage.getItem('chat-drawer-open');
+    if (savedChatPreference !== null) {
+      setIsChatOpen(JSON.parse(savedChatPreference));
+    }
+  }, []);
+
+  // Save chat preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chat-drawer-open', JSON.stringify(isChatOpen));
+  }, [isChatOpen]);
   
   // Sort competitive ranking by overall score (highest first)
   const sortedCompetitiveRanking = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
@@ -188,9 +202,9 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-      {/* Header */}
-      <header className={`bg-gradient-to-r ${data.roastMode ? 'from-orange-600 to-red-600' : 'from-blue-600 to-blue-700'} text-white p-6`}>
+    <div className="bg-white rounded-2xl shadow-xl">
+      {/* Report Header - Fixed */}
+      <header className={`sticky top-0 z-30 bg-gradient-to-r ${data.roastMode ? 'from-orange-600 to-red-600' : 'from-blue-600 to-blue-700'} text-white p-6`}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-2">
@@ -243,29 +257,60 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
 
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar Navigation */}
-        <nav className="w-full lg:w-80 bg-gray-50 border-r border-gray-200 p-4" aria-label="Report sections">
-          <div className="space-y-1 lg:space-y-1 flex flex-wrap lg:flex-col gap-2 lg:gap-0">
-            {sections.map((section) => (
+        <nav className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${
+          isSidebarCollapsed ? 'w-16 lg:w-16' : 'w-full lg:w-80'
+        }`} aria-label="Report sections">
+          <div className="p-4">
+            {/* Collapse/Expand Toggle */}
+            <div className="flex items-center justify-between mb-4">
+              {!isSidebarCollapsed && (
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Report Sections
+                </h3>
+              )}
               <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={cn(
-                  'w-full lg:w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap',
-                  activeSection === section.id
-                    ? 'bg-blue-100 text-blue-800 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                )}
-                aria-current={activeSection === section.id ? 'page' : undefined}
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
-                <span className="text-lg" aria-hidden="true">{section.icon}</span>
-                {section.title}
+                {isSidebarCollapsed ? (
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                )}
               </button>
-            ))}
+            </div>
+            
+            <div className="space-y-1 lg:space-y-1 flex flex-wrap lg:flex-col gap-2 lg:gap-0">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={cn(
+                    'w-full lg:w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap',
+                    activeSection === section.id
+                      ? 'bg-blue-100 text-blue-800 font-semibold'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+                    isSidebarCollapsed && 'justify-center'
+                  )}
+                  aria-current={activeSection === section.id ? 'page' : undefined}
+                  title={isSidebarCollapsed ? section.title : undefined}
+                >
+                  <span className="text-lg" aria-hidden="true">{section.icon}</span>
+                  {!isSidebarCollapsed && section.title}
+                </button>
+              ))}
+            </div>
           </div>
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto max-h-screen" role="main">
+        <main className="flex-1 p-6 lg:p-8" role="main">
           <div ref={reportRef}>
             {/* Brand Overview Section */}
             {activeSection === 'overview' && (

@@ -12,12 +12,24 @@ export default function CompetitiveScoreChart({ data, title = "Competitive Score
   // Sort competitors by overall score
   const sortedCompetitors = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
   
+  // Define brand colors
+  const brandColors = [
+    '#3B82F6', // Blue
+    '#10B981', // Green
+    '#8B5CF6', // Purple
+    '#F59E0B', // Orange
+    '#EF4444', // Red
+    '#06B6D4', // Cyan
+    '#84CC16', // Lime
+    '#F97316', // Orange-500
+  ];
+  
   const metrics = [
-    { key: 'sentiment', label: 'Sentiment', color: '#3B82F6' },
-    { key: 'share_of_voice', label: 'Share of Voice', color: '#10B981' },
-    { key: 'ai_readiness', label: 'AI Readiness', color: '#8B5CF6' },
-    { key: 'seo_health', label: 'SEO Health', color: '#F59E0B' },
-    { key: 'social_resonance', label: 'Social Resonance', color: '#EF4444' }
+    { key: 'sentiment', label: 'Sentiment' },
+    { key: 'share_of_voice', label: 'Share of Voice' },
+    { key: 'ai_readiness', label: 'AI Readiness' },
+    { key: 'seo_health', label: 'SEO Health' },
+    { key: 'social_resonance', label: 'Social Resonance' }
   ];
 
   return (
@@ -50,12 +62,13 @@ export default function CompetitiveScoreChart({ data, title = "Competitive Score
         <h4 className="font-semibold text-gray-900 text-sm mb-3">Score Breakdown by Metric</h4>
         {metrics.map((metric) => (
           <div key={metric.key} className="space-y-1">
-            <div className="flex justify-between text-xs text-gray-600">
+            <div className="flex justify-between text-sm font-bold text-gray-900 mb-2">
               <span>{metric.label}</span>
             </div>
             <div className="space-y-1">
-              {sortedCompetitors.map((competitor) => {
+              {sortedCompetitors.map((competitor, brandIndex) => {
                 const score = competitor.score_breakdown[metric.key as keyof typeof competitor.score_breakdown]?.score || 0;
+                const brandColor = brandColors[brandIndex % brandColors.length];
                 return (
                   <div key={`${competitor.brand}-${metric.key}`} className="flex items-center gap-2">
                     <div className="w-16 text-xs text-gray-600 truncate">{competitor.brand}</div>
@@ -64,7 +77,7 @@ export default function CompetitiveScoreChart({ data, title = "Competitive Score
                         className="h-2 rounded-full" 
                         style={{ 
                           width: `${score}%`, 
-                          backgroundColor: metric.color 
+                          backgroundColor: brandColor 
                         }}
                       ></div>
                     </div>
@@ -75,6 +88,25 @@ export default function CompetitiveScoreChart({ data, title = "Competitive Score
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Brand Color Legend */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <h5 className="text-sm font-semibold text-gray-900 mb-2">Brand Legend</h5>
+        <div className="flex flex-wrap gap-3">
+          {sortedCompetitors.map((competitor, brandIndex) => {
+            const brandColor = brandColors[brandIndex % brandColors.length];
+            return (
+              <div key={competitor.brand} className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: brandColor }}
+                ></div>
+                <span className="text-xs text-gray-600">{competitor.brand}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-4 text-sm text-gray-600">

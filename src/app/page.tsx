@@ -69,32 +69,34 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <header className="text-center mb-16">
-          <div className="mb-6">
-            {/* Brand Scan Logo */}
-            <div className="flex items-center justify-center mb-6">
-              <Image 
-                src="/brand-scan-logo.png" 
-                alt="Brand Scan Logo" 
-                width={64}
-                height={64}
-                className="h-16 w-auto"
-              />
+    <div className="min-h-screen bg-gray-50">
+      <div className={`${analysisData ? 'px-4 pt-8' : 'container mx-auto px-4 py-12'}`}>
+        {/* Header - Only show when not in report view */}
+        {!analysisData && (
+          <header className="text-center mb-16">
+            <div className="mb-6">
+              {/* Brand Scan Logo */}
+              <div className="flex items-center justify-center mb-6">
+                <Image 
+                  src="/brand-scan-logo.png" 
+                  alt="Brand Scan Logo" 
+                  width={64}
+                  height={64}
+                  className="h-16 w-auto"
+                />
+              </div>
+              <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
             </div>
-            <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
-          </div>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Analyze your brand&apos;s online presence, 
-            competitive positioning, and discover opportunities to improve AI-search visibility, 
-            SEO, and social resonance.
-          </p>
-        </header>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Analyze your brand&apos;s online presence, 
+              competitive positioning, and discover opportunities to improve AI-search visibility, 
+              SEO, and social resonance.
+            </p>
+          </header>
+        )}
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto">
+        <div className={`${analysisData ? 'max-w-none' : 'max-w-7xl'} mx-auto`}>
           {!analysisData ? (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
               <BrandAnalysisForm onSubmit={handleAnalysis} isLoading={isLoading} />
