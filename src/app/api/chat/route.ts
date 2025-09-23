@@ -23,7 +23,7 @@ interface ChartConfig {
   type: 'sentiment_bar' | 'competitive_radar' | 'score_breakdown' | 'trend_line' | 'custom';
   title: string;
   description: string;
-  data: any;
+  data: unknown;
   insights: string[];
 }
 
@@ -208,7 +208,7 @@ Respond directly to the ${reportData.inputBrand || 'brand'} team's question:`;
                       
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
                       controller.close();
-                    } catch (error) {
+                    } catch {
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Streaming error' })}\n\n`));
                       controller.close();
                     }
