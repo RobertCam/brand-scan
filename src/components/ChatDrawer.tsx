@@ -47,8 +47,20 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputValue.trim();
     setInputValue('');
     setIsLoading(true);
+
+    // Create a placeholder for the streaming response
+    const assistantMessageId = (Date.now() + 1).toString();
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, assistantMessage]);
 
     try {
       const response = await fetch('/api/chat', {
@@ -57,7 +69,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputValue.trim(),
+          message: currentMessage,
           reportData,
           conversationHistory: messages,
         }),
@@ -67,24 +79,54 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
-      
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-      };
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      setMessages(prev => [...prev, assistantMessage]);
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.content) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: msg.content + data.content }
+                    : msg
+                ));
+              }
+              
+              if (data.done) {
+                setIsLoading(false);
+                return;
+              }
+              
+              if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (parseError) {
+              console.error('Error parsing streaming data:', parseError);
+            }
+          }
+        }
+      }
     } catch (error) {
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -97,13 +139,24 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
     }
   };
 
-  const suggestedQuestions = [
-    "How can I improve my brand visibility and reputation?",
-    "Generate a breakdown of areas I should focus first, longer bets, and distractions.",
-    "What does this competitive ranking mean for my business?",
-    "Explain this weakness in more detail",
-    "How can I improve my SEO score?",
-    "What opportunities should I prioritize?"
+  const suggestedQuestions = reportData.roastMode ? [
+    "Alright, give it to us straight - what's really holding us back?",
+    "What would Bill Murray say about our brand strategy?",
+    "Break down our weaknesses like Marc Maron would - brutally honest but constructive.",
+    "What's the most embarrassing thing about our competitive position?",
+    "How can we stop being so... corporate and actually connect with people?",
+    "What would our competitors roast us for if they were being honest?",
+    "Give us the tough love - what do we need to hear but don't want to?",
+    "What's our biggest blind spot that we're probably ignoring?"
+  ] : [
+    "How can we improve our brand visibility and reputation?",
+    "Generate a breakdown of areas we should focus on first, longer bets, and distractions.",
+    "What does this competitive ranking mean for our business?",
+    "Explain this weakness in more detail - how can we address it?",
+    "How can we improve our SEO score?",
+    "What opportunities should we prioritize for our brand?",
+    "What are our biggest competitive advantages right now?",
+    "How can we better differentiate ourselves from competitors?"
   ];
 
   const handleSuggestedQuestion = (question: string) => {
@@ -119,10 +172,12 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className={`flex items-center justify-between p-4 border-b ${reportData.roastMode ? 'border-orange-200 bg-gradient-to-r from-orange-50 to-red-50' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Ask Questions</h2>
+            <MessageCircle className={`w-5 h-5 ${reportData.roastMode ? 'text-orange-600' : 'text-blue-600'}`} />
+            <h2 className={`text-lg font-semibold ${reportData.roastMode ? 'text-orange-900' : 'text-gray-900'}`}>
+              {reportData.roastMode ? '🔥 Ask Questions (Burn Mode)' : 'Ask Questions'}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -138,10 +193,15 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
           {messages.length === 0 ? (
             <div className="space-y-3">
               <p className="text-sm text-gray-600 mb-4">
-                Ask me anything about your brand analysis report!
+                {reportData.roastMode 
+                  ? "Ready for some tough love? Ask me anything about your brand analysis! I'll give you the brutally honest insights your team needs to hear."
+                  : "Ask me anything about your brand analysis! I'm here to help your team understand the insights and take action."
+                }
               </p>
               <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Suggested Questions:</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  {reportData.roastMode ? 'Burn Mode Questions:' : 'Suggested Questions:'}
+                </p>
                 {suggestedQuestions.map((question, index) => (
                   <button
                     key={index}
@@ -201,14 +261,18 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask a question about your report..."
+              placeholder={reportData.roastMode ? "Ask for some tough love about your brand..." : "Ask a question about your brand analysis..."}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               disabled={isLoading}
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className={`px-3 py-2 text-white rounded-lg disabled:cursor-not-allowed transition-colors ${
+                reportData.roastMode 
+                  ? 'bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300' 
+                  : 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300'
+              }`}
             >
               <Send className="w-4 h-4" />
             </button>
