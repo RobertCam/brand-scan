@@ -16,7 +16,15 @@ interface BrandReportProps {
 export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [pinnedCharts, setPinnedCharts] = useState<any[]>([]);
+  const [pinnedCharts, setPinnedCharts] = useState<Array<{
+    id: string;
+    type: string;
+    title: string;
+    description: string;
+    data: unknown;
+    insights: string[];
+    pinnedAt: string;
+  }>>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +66,13 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   }, [pinnedCharts, data.inputBrand]);
 
   // Handle pinning a chart
-  const handlePinChart = (chart: any) => {
+  const handlePinChart = (chart: {
+    type: string;
+    title: string;
+    description: string;
+    data: unknown;
+    insights: string[];
+  }) => {
     const chartWithId = {
       ...chart,
       id: `${chart.type}-${Date.now()}`,
@@ -685,7 +699,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-900">📌 Pinned Charts</h2>
                   <p className="text-sm text-gray-600">
-                    Charts you've pinned from chat conversations
+                    Charts you&apos;ve pinned from chat conversations
                   </p>
                 </div>
                 

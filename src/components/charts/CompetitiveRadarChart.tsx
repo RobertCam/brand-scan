@@ -16,10 +16,10 @@ export default function CompetitiveRadarChart({ data, title = "Competitive Analy
   const chartData = metrics.map(metric => {
     const metricKey = metric.toLowerCase().replace(' ', '_').replace(' ', '_') as keyof typeof data.competitive_ranking[0]['score_breakdown'];
     
-    const dataPoint: any = { metric };
+    const dataPoint: Record<string, string | number> = { metric };
     
     // Add data for each competitor
-    data.competitive_ranking.forEach((competitor, index) => {
+    data.competitive_ranking.forEach((competitor) => {
       const score = competitor.score_breakdown[metricKey]?.score || 0;
       dataPoint[competitor.brand] = score;
     });
@@ -30,12 +30,20 @@ export default function CompetitiveRadarChart({ data, title = "Competitive Analy
   // Generate colors for competitors
   const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
   
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean;
+    payload?: Array<{
+      name: string;
+      value: number;
+      color: string;
+    }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900 mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}/100
             </p>

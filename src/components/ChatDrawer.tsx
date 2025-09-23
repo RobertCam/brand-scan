@@ -14,7 +14,7 @@ interface ChatMessage {
     type: string;
     title: string;
     description: string;
-    data: any;
+    data: unknown;
     insights: string[];
   };
 }
@@ -23,7 +23,13 @@ interface ChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   reportData: BrandAnalysisWithMetadata;
-  onPinChart?: (chart: any) => void;
+  onPinChart?: (chart: {
+    type: string;
+    title: string;
+    description: string;
+    data: unknown;
+    insights: string[];
+  }) => void;
 }
 
 export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: ChatDrawerProps) {
@@ -139,9 +145,9 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
           }
         }
       }
-    } catch (error) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === assistantMessageId 
+    } catch {
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMessageId
           ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
           : msg
       ));
