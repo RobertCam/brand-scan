@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
+import DynamicChart from './charts/DynamicChart';
 
 interface ChatMessage {
   id: string;
@@ -16,6 +18,20 @@ interface ChatMessage {
     description: string;
     data: unknown;
     insights: string[];
+    chartData?: {
+      labels?: string[];
+      datasets?: Array<{
+        label: string;
+        data: number[] | Array<{x: number, y: number}>;
+        backgroundColor?: string | string[];
+        borderColor?: string | string[];
+        [key: string]: unknown;
+      }>;
+      matrix?: Array<Array<{value: number, label: string}>>;
+      categories?: string[];
+      values?: string[];
+      points?: Array<{x: number, y: number, label: string}>;
+    };
   };
 }
 
@@ -29,6 +45,20 @@ interface ChatDrawerProps {
     description: string;
     data: unknown;
     insights: string[];
+    chartData?: {
+      labels?: string[];
+      datasets?: Array<{
+        label: string;
+        data: number[] | Array<{x: number, y: number}>;
+        backgroundColor?: string | string[];
+        borderColor?: string | string[];
+        [key: string]: unknown;
+      }>;
+      matrix?: Array<Array<{value: number, label: string}>>;
+      categories?: string[];
+      values?: string[];
+      points?: Array<{x: number, y: number, label: string}>;
+    };
   }) => void;
 }
 
@@ -114,8 +144,10 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
           if (line.startsWith('data: ')) {
                         try {
                           const data = JSON.parse(line.slice(6));
+                          console.log('Received streaming data:', data);
 
                           if (data.content) {
+                            console.log('Updating content:', data.content);
                             setMessages(prev => prev.map(msg =>
                               msg.id === assistantMessageId
                                 ? { ...msg, content: msg.content + data.content }
@@ -124,6 +156,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           }
 
                           if (data.chart) {
+                            console.log('Updating chart:', data.chart);
                             setMessages(prev => prev.map(msg =>
                               msg.id === assistantMessageId
                                 ? { ...msg, chart: data.chart }
@@ -223,8 +256,9 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                   ? 'bg-white text-gray-900 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
+              title="View prebuilt chart templates"
             >
-              📊 Charts
+              📊 Templates
             </button>
           </div>
           <button
@@ -276,7 +310,9 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-sm prose prose-sm max-w-none">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
                       
                       {/* Render chart if available */}
                       {message.chart && (
@@ -295,16 +331,14 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           </div>
                           <p className="text-xs text-gray-600 mb-3">{message.chart.description}</p>
                           
-                          {/* Render appropriate chart component */}
-                          {message.chart.type === 'sentiment_bar' && (
-                            <SentimentBarChart data={reportData} title="" className="border-0 p-0" />
-                          )}
-                          {message.chart.type === 'competitive_radar' && (
-                            <CompetitiveRadarChart data={reportData} title="" className="border-0 p-0" />
-                          )}
-                          {message.chart.type === 'score_breakdown' && (
-                            <CompetitiveScoreChart data={reportData} title="" className="border-0 p-0" />
-                          )}
+                          {/* Render chart using DynamicChart component */}
+                          <DynamicChart
+                            type={message.chart.type}
+                            title=""
+                            description=""
+                            chartData={message.chart.chartData}
+                            className="border-0 p-0"
+                          />
                           
                           {/* Chart insights */}
                           {message.chart.insights && message.chart.insights.length > 0 && (
@@ -347,7 +381,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <p className="text-sm text-gray-600 mb-2">
-                  Create visualizations from your brand analysis data
+                  Prebuilt chart templates from your brand analysis data
                 </p>
                 <p className="text-xs text-gray-500">
                   Click the 📌 Pin button on any chart to add it to your main report
@@ -370,7 +404,20 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           'Compare sentiment performance across web, news, forums, and social channels',
                           'Identify which channels show the strongest positive sentiment',
                           'Use insights to focus marketing efforts on high-performing channels'
-                        ]
+                        ],
+                        chartData: {
+                          labels: ['Web', 'News', 'Forums', 'Social'],
+                          datasets: [{
+                            label: 'Sentiment Score',
+                            data: [
+                              reportData.sentiment_analysis.web.score,
+                              reportData.sentiment_analysis.news.score,
+                              reportData.sentiment_analysis.forums.score,
+                              reportData.sentiment_analysis.social.score
+                            ],
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+                          }]
+                        }
                       })}
                       className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
                       title="Pin this chart to the main report"
@@ -394,7 +441,23 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           'Visualize competitive positioning across multiple dimensions',
                           'Identify areas where your brand excels or needs improvement',
                           'Compare performance against key competitors in your market'
-                        ]
+                        ],
+                        chartData: {
+                          labels: ['Sentiment', 'Share of Voice', 'AI Readiness', 'SEO Health', 'Social Resonance'],
+                          datasets: reportData.competitive_ranking.map((competitor, index) => ({
+                            label: competitor.brand,
+                            data: [
+                              competitor.score_breakdown.sentiment.score,
+                              competitor.score_breakdown.share_of_voice.score,
+                              competitor.score_breakdown.ai_readiness.score,
+                              competitor.score_breakdown.seo_health.score,
+                              competitor.score_breakdown.social_resonance.score
+                            ],
+                            backgroundColor: `rgba(${59 + index * 50}, ${130 + index * 30}, ${246 - index * 20}, 0.2)`,
+                            borderColor: `rgba(${59 + index * 50}, ${130 + index * 30}, ${246 - index * 20}, 1)`,
+                            borderWidth: 2
+                          }))
+                        }
                       })}
                       className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
                       title="Pin this chart to the main report"
@@ -418,7 +481,37 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                           'See exact scores for each competitor across all metrics',
                           'Identify specific areas for improvement',
                           'Track progress over time with detailed score breakdowns'
-                        ]
+                        ],
+                        chartData: {
+                          labels: reportData.competitive_ranking.map(c => c.brand),
+                          datasets: [
+                            {
+                              label: 'Sentiment',
+                              data: reportData.competitive_ranking.map(c => c.score_breakdown.sentiment.score),
+                              backgroundColor: '#3B82F6'
+                            },
+                            {
+                              label: 'Share of Voice',
+                              data: reportData.competitive_ranking.map(c => c.score_breakdown.share_of_voice.score),
+                              backgroundColor: '#10B981'
+                            },
+                            {
+                              label: 'AI Readiness',
+                              data: reportData.competitive_ranking.map(c => c.score_breakdown.ai_readiness.score),
+                              backgroundColor: '#F59E0B'
+                            },
+                            {
+                              label: 'SEO Health',
+                              data: reportData.competitive_ranking.map(c => c.score_breakdown.seo_health.score),
+                              backgroundColor: '#EF4444'
+                            },
+                            {
+                              label: 'Social Resonance',
+                              data: reportData.competitive_ranking.map(c => c.score_breakdown.social_resonance.score),
+                              backgroundColor: '#8B5CF6'
+                            }
+                          ]
+                        }
                       })}
                       className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
                       title="Pin this chart to the main report"

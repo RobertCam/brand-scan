@@ -6,7 +6,7 @@ import { track } from '@vercel/analytics';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
 import ChatDrawer from './ChatDrawer';
-import { SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
+import { DynamicChart, SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -24,6 +24,20 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     data: unknown;
     insights: string[];
     pinnedAt: string;
+    chartData?: {
+      labels?: string[];
+      datasets?: Array<{
+        label: string;
+        data: number[] | Array<{x: number, y: number}>;
+        backgroundColor?: string | string[];
+        borderColor?: string | string[];
+        [key: string]: unknown;
+      }>;
+      matrix?: Array<Array<{value: number, label: string}>>;
+      categories?: string[];
+      values?: string[];
+      points?: Array<{x: number, y: number, label: string}>;
+    };
   }>>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -72,6 +86,20 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     description: string;
     data: unknown;
     insights: string[];
+    chartData?: {
+      labels?: string[];
+      datasets?: Array<{
+        label: string;
+        data: number[] | Array<{x: number, y: number}>;
+        backgroundColor?: string | string[];
+        borderColor?: string | string[];
+        [key: string]: unknown;
+      }>;
+      matrix?: Array<Array<{value: number, label: string}>>;
+      categories?: string[];
+      values?: string[];
+      points?: Array<{x: number, y: number, label: string}>;
+    };
   }) => {
     const chartWithId = {
       ...chart,
@@ -738,15 +766,25 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                           </button>
                         </div>
                         
-                        {/* Render the chart */}
+                        {/* Render the chart using original components for prebuilt charts */}
                         {chart.type === 'sentiment_bar' && (
-                          <SentimentBarChart data={data} title="" className="border-0 p-0" />
+                          <SentimentBarChart data={chart.data as BrandAnalysisWithMetadata} />
                         )}
                         {chart.type === 'competitive_radar' && (
-                          <CompetitiveRadarChart data={data} title="" className="border-0 p-0" />
+                          <CompetitiveRadarChart data={chart.data as BrandAnalysisWithMetadata} />
                         )}
                         {chart.type === 'score_breakdown' && (
-                          <CompetitiveScoreChart data={data} title="" className="border-0 p-0" />
+                          <CompetitiveScoreChart data={chart.data as BrandAnalysisWithMetadata} />
+                        )}
+                        {/* Use DynamicChart only for custom charts */}
+                        {!['sentiment_bar', 'competitive_radar', 'score_breakdown'].includes(chart.type) && (
+                          <DynamicChart
+                            type={chart.type}
+                            title=""
+                            description=""
+                            chartData={chart.chartData}
+                            className="border-0 p-0"
+                          />
                         )}
                         
                         {/* Chart insights */}
