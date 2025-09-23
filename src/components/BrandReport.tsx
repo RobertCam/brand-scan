@@ -299,7 +299,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
 
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar Navigation */}
-        <nav className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${
+        <nav className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto ${
           isSidebarCollapsed ? 'w-16 lg:w-16' : 'w-full lg:w-80'
         }`} aria-label="Report sections">
           <div className="p-4">

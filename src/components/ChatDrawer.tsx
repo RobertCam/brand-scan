@@ -67,6 +67,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'chat' | 'charts'>('chat');
+  const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -208,9 +209,11 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
   ] : [
     "How can we improve our brand visibility and reputation?",
     "Generate a breakdown of areas we should focus on first, longer bets, and distractions.",
-    "Show me a bar chart comparing our sentiment scores across channels",
-    "Create a competitive radar chart to visualize our positioning",
-    "Generate a chart showing our score breakdown vs competitors",
+    "Create a chart showing Reddit sentiment analysis over time for our brand",
+    "Generate a scatter plot comparing our brand sentiment vs market share",
+    "Show me a bar chart of our brand mentions across different social platforms",
+    "Create a line chart tracking our competitive positioning over the past year",
+    "Generate a matrix chart plotting our content ideas by effort vs impact",
     "What opportunities should we prioritize for our brand?",
     "What are our biggest competitive advantages right now?",
     "How can we better differentiate ourselves from competitors?"
@@ -237,6 +240,21 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
             </h2>
           </div>
           
+          {/* Show Suggested Prompts Button */}
+          {mode === 'chat' && (
+            <button
+              onClick={() => setShowSuggestedPrompts(!showSuggestedPrompts)}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                showSuggestedPrompts 
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                  : 'bg-gray-100 text-gray-600 hover:text-gray-900'
+              }`}
+              title="Toggle suggested questions"
+            >
+              💡 Prompts
+            </button>
+          )}
+          
           {/* Mode Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -256,9 +274,9 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                   ? 'bg-white text-gray-900 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
-              title="View prebuilt chart templates"
+              title="View prebuilt charts"
             >
-              📊 Templates
+              📊 Charts
             </button>
           </div>
           <button
@@ -274,7 +292,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 h-[calc(100vh-200px)]">
           {mode === 'chat' ? (
             <>
-              {messages.length === 0 ? (
+              {(messages.length === 0 || showSuggestedPrompts) ? (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600 mb-4">
                     {reportData.roastMode 
@@ -283,13 +301,26 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                     }
                   </p>
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      {reportData.roastMode ? 'Burn Mode Questions:' : 'Suggested Questions:'}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {reportData.roastMode ? 'Burn Mode Questions:' : 'Suggested Questions:'}
+                      </p>
+                      {showSuggestedPrompts && messages.length > 0 && (
+                        <button
+                          onClick={() => setShowSuggestedPrompts(false)}
+                          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          ✕ Close
+                        </button>
+                      )}
+                    </div>
                     {suggestedQuestions.map((question, index) => (
                       <button
                         key={index}
-                        onClick={() => handleSuggestedQuestion(question)}
+                        onClick={() => {
+                          handleSuggestedQuestion(question);
+                          setShowSuggestedPrompts(false); // Hide prompts after selection
+                        }}
                         className="w-full text-left p-3 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 text-gray-900"
                       >
                         {question}
@@ -298,11 +329,23 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                   </div>
                 </div>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
+                <div className="space-y-3">
+                  {/* Show prompts button when there are messages */}
+                  {messages.length > 0 && (
+                    <div className="text-center">
+                      <button
+                        onClick={() => setShowSuggestedPrompts(true)}
+                        className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
+                      >
+                        💡 Show Suggested Questions
+                      </button>
+                    </div>
+                  )}
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
                     <div
                       className={`max-w-[80%] p-3 rounded-lg ${
                         message.role === 'user'
@@ -361,7 +404,8 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                       </p>
                     </div>
                   </div>
-                ))
+                ))}
+                </div>
               )}
               
               {isLoading && (
