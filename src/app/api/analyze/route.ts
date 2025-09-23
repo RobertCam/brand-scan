@@ -271,16 +271,48 @@ export async function POST(request: NextRequest) {
         jsonContent = jsonContent.substring(jsonStart, jsonEnd + 1);
       }
       
-      console.log('Raw OpenAI content:', content);
-      console.log('Extracted JSON content:', jsonContent);
+      // Method 4: Try to find the end of the JSON by looking for the last complete object
+      // This handles cases where there might be trailing text after the JSON
+      let braceCount = 0;
+      let endIndex = -1;
+      for (let i = 0; i < jsonContent.length; i++) {
+        if (jsonContent[i] === '{') braceCount++;
+        if (jsonContent[i] === '}') braceCount--;
+        if (braceCount === 0 && i > 0) {
+          endIndex = i;
+          break;
+        }
+      }
+      
+      if (endIndex !== -1) {
+        jsonContent = jsonContent.substring(0, endIndex + 1);
+      }
+      
+      console.log('Raw OpenAI content length:', content.length);
+      console.log('Extracted JSON content length:', jsonContent.length);
+      console.log('First 200 chars of extracted JSON:', jsonContent.substring(0, 200));
       
       analysisData = JSON.parse(jsonContent);
     } catch (error) {
       console.error('Failed to parse OpenAI response:', error);
-      console.error('Raw content:', content);
-      console.error('Content length:', content.length);
+      console.error('Raw content length:', content.length);
       console.error('First 500 chars:', content.substring(0, 500));
-      throw new Error('Invalid JSON response from OpenAI');
+      console.error('Last 500 chars:', content.substring(Math.max(0, content.length - 500)));
+      
+      // Try one more fallback: look for any valid JSON object in the content
+      try {
+        const jsonObjectMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonObjectMatch) {
+          console.log('Attempting fallback JSON parsing...');
+          analysisData = JSON.parse(jsonObjectMatch[0]);
+          console.log('Fallback parsing successful!');
+        } else {
+          throw new Error('No valid JSON object found');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback parsing also failed:', fallbackError);
+        throw new Error('Invalid JSON response from OpenAI');
+      }
     }
 
     // Schema metadata is extracted for internal analysis but not included in user-facing report
