@@ -559,7 +559,7 @@ Now provide a strategic response to their question. Be direct and concise - no l
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        let functionCallData: {
+        const functionCallData: {
           type: string;
           title: string;
           description: string;

@@ -116,8 +116,8 @@ export default function DynamicChart({ type, title, description, chartData, clas
 
     // Transform data for Recharts format
     const data = chartData.labels.map((label, index) => {
-      const dataPoint: any = { name: label };
-      chartData.datasets?.forEach((dataset, datasetIndex) => {
+      const dataPoint: Record<string, unknown> = { name: label };
+      chartData.datasets?.forEach((dataset) => {
         if (Array.isArray(dataset.data)) {
           dataPoint[dataset.label] = dataset.data[index] || 0;
         }
@@ -160,8 +160,8 @@ export default function DynamicChart({ type, title, description, chartData, clas
 
     // Transform data for Recharts format
     const data = chartData.labels.map((label, index) => {
-      const dataPoint: any = { name: label };
-      chartData.datasets?.forEach((dataset, datasetIndex) => {
+      const dataPoint: Record<string, unknown> = { name: label };
+      chartData.datasets?.forEach((dataset) => {
         if (Array.isArray(dataset.data)) {
           dataPoint[dataset.label] = dataset.data[index] || 0;
         }
@@ -277,7 +277,7 @@ export default function DynamicChart({ type, title, description, chartData, clas
 
     // Transform data for Recharts radar format
     const data = chartData.labels.map((label, index) => {
-      const dataPoint: any = { subject: label };
+      const dataPoint: Record<string, unknown> = { subject: label };
       chartData.datasets?.forEach((dataset) => {
         if (Array.isArray(dataset.data)) {
           dataPoint[dataset.label] = dataset.data[index] || 0;
