@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, FileText, ExternalLink, MessageCircle } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
 import { cn } from '@/lib/utils';
 import ChatDrawer from './ChatDrawer';
+import { SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -15,10 +16,60 @@ interface BrandReportProps {
 export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [pinnedCharts, setPinnedCharts] = useState<any[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
   
   // Sort competitive ranking by overall score (highest first)
   const sortedCompetitiveRanking = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
+
+  // Load pinned charts from localStorage on component mount
+  useEffect(() => {
+    const savedCharts = localStorage.getItem(`pinned-charts-${data.inputBrand}`);
+    if (savedCharts) {
+      try {
+        setPinnedCharts(JSON.parse(savedCharts));
+      } catch (error) {
+        console.error('Error loading pinned charts:', error);
+      }
+    }
+  }, [data.inputBrand]);
+
+  // Save pinned charts to localStorage whenever they change
+  useEffect(() => {
+    if (pinnedCharts.length > 0) {
+      localStorage.setItem(`pinned-charts-${data.inputBrand}`, JSON.stringify(pinnedCharts));
+    } else {
+      localStorage.removeItem(`pinned-charts-${data.inputBrand}`);
+    }
+  }, [pinnedCharts, data.inputBrand]);
+
+  // Handle pinning a chart
+  const handlePinChart = (chart: any) => {
+    const chartWithId = {
+      ...chart,
+      id: `${chart.type}-${Date.now()}`,
+      pinnedAt: new Date().toISOString(),
+    };
+    setPinnedCharts(prev => [...prev, chartWithId]);
+    
+    // Track pinning action
+    track('chart_pinned', {
+      chart_type: chart.type,
+      brand: data.inputBrand || 'unknown',
+      roast_mode: data.roastMode || false,
+    });
+  };
+
+  // Handle removing a pinned chart
+  const handleUnpinChart = (chartId: string) => {
+    setPinnedCharts(prev => prev.filter(chart => chart.id !== chartId));
+    
+    // Track unpinning action
+    track('chart_unpinned', {
+      brand: data.inputBrand || 'unknown',
+      roast_mode: data.roastMode || false,
+    });
+  };
 
   const sections = [
     { id: 'overview', title: 'Brand Overview', icon: '📊' },
@@ -26,6 +77,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
     { id: 'swot', title: 'SWOT Analysis', icon: '🔍' },
     { id: 'competitive', title: 'Competitive Ranking', icon: '🏆' },
     { id: 'editorial', title: 'Editorial Ideas', icon: '✍️' },
+    ...(pinnedCharts.length > 0 ? [{ id: 'pinned-charts', title: 'Pinned Charts', icon: '📌' }] : []),
   ];
 
 
@@ -582,6 +634,80 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
               </div>
             )}
 
+            {/* Pinned Charts Section */}
+            {activeSection === 'pinned-charts' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">📌 Pinned Charts</h2>
+                  <p className="text-sm text-gray-600">
+                    Charts you've pinned from chat conversations
+                  </p>
+                </div>
+                
+                {pinnedCharts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📊</div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pinned Charts Yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      Pin charts from your chat conversations to create a personalized dashboard
+                    </p>
+                    <button
+                      onClick={() => setIsChatOpen(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Open Chat to Pin Charts
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {pinnedCharts.map((chart) => (
+                      <div key={chart.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{chart.title}</h3>
+                            <p className="text-sm text-gray-600">{chart.description}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Pinned on {new Date(chart.pinnedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleUnpinChart(chart.id)}
+                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                            title="Remove this chart from pinned charts"
+                          >
+                            🗑️ Remove
+                          </button>
+                        </div>
+                        
+                        {/* Render the chart */}
+                        {chart.type === 'sentiment_bar' && (
+                          <SentimentBarChart data={data} title="" className="border-0 p-0" />
+                        )}
+                        {chart.type === 'competitive_radar' && (
+                          <CompetitiveRadarChart data={data} title="" className="border-0 p-0" />
+                        )}
+                        {chart.type === 'score_breakdown' && (
+                          <CompetitiveScoreChart data={data} title="" className="border-0 p-0" />
+                        )}
+                        
+                        {/* Chart insights */}
+                        {chart.insights && chart.insights.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-gray-100">
+                            <h4 className="font-semibold text-gray-900 text-sm mb-2">Key Insights:</h4>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              {chart.insights.map((insight: string, index: number) => (
+                                <li key={index}>• {insight}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         </main>
       </div>
@@ -591,6 +717,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         reportData={data}
+        onPinChart={handlePinChart}
       />
     </div>
   );

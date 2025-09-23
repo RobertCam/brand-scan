@@ -23,9 +23,10 @@ interface ChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   reportData: BrandAnalysisWithMetadata;
+  onPinChart?: (chart: any) => void;
 }
 
-export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerProps) {
+export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: ChatDrawerProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -274,7 +275,18 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
                       {/* Render chart if available */}
                       {message.chart && (
                         <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
-                          <h4 className="font-semibold text-gray-900 text-sm mb-2">{message.chart.title}</h4>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-gray-900 text-sm">{message.chart.title}</h4>
+                            {onPinChart && (
+                              <button
+                                onClick={() => onPinChart(message.chart)}
+                                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                title="Pin this chart to the main report"
+                              >
+                                📌 Pin to Report
+                              </button>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-600 mb-3">{message.chart.description}</p>
                           
                           {/* Render appropriate chart component */}
@@ -328,16 +340,84 @@ export default function ChatDrawer({ isOpen, onClose, reportData }: ChatDrawerPr
             /* Charts Mode */
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 mb-2">
                   Create visualizations from your brand analysis data
+                </p>
+                <p className="text-xs text-gray-500">
+                  Click the 📌 Pin button on any chart to add it to your main report
                 </p>
               </div>
               
               {/* Chart Templates */}
               <div className="space-y-4">
-                <SentimentBarChart data={reportData} />
-                <CompetitiveRadarChart data={reportData} />
-                <CompetitiveScoreChart data={reportData} />
+                {/* Sentiment Bar Chart */}
+                <div className="relative">
+                  <SentimentBarChart data={reportData} />
+                  {onPinChart && (
+                    <button
+                      onClick={() => onPinChart({
+                        type: 'sentiment_bar',
+                        title: 'Sentiment Analysis',
+                        description: 'Sentiment scores across different channels for your brand',
+                        insights: [
+                          'Compare sentiment performance across web, news, forums, and social channels',
+                          'Identify which channels show the strongest positive sentiment',
+                          'Use insights to focus marketing efforts on high-performing channels'
+                        ]
+                      })}
+                      className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
+                      title="Pin this chart to the main report"
+                    >
+                      📌 Pin
+                    </button>
+                  )}
+                </div>
+
+                {/* Competitive Radar Chart */}
+                <div className="relative">
+                  <CompetitiveRadarChart data={reportData} />
+                  {onPinChart && (
+                    <button
+                      onClick={() => onPinChart({
+                        type: 'competitive_radar',
+                        title: 'Competitive Analysis',
+                        description: 'Multi-dimensional comparison of competitors across key metrics',
+                        insights: [
+                          'Visualize competitive positioning across multiple dimensions',
+                          'Identify areas where your brand excels or needs improvement',
+                          'Compare performance against key competitors in your market'
+                        ]
+                      })}
+                      className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
+                      title="Pin this chart to the main report"
+                    >
+                      📌 Pin
+                    </button>
+                  )}
+                </div>
+
+                {/* Competitive Score Chart */}
+                <div className="relative">
+                  <CompetitiveScoreChart data={reportData} />
+                  {onPinChart && (
+                    <button
+                      onClick={() => onPinChart({
+                        type: 'score_breakdown',
+                        title: 'Competitive Score Breakdown',
+                        description: 'Detailed metric-by-metric analysis of competitive performance',
+                        insights: [
+                          'See exact scores for each competitor across all metrics',
+                          'Identify specific areas for improvement',
+                          'Track progress over time with detailed score breakdowns'
+                        ]
+                      })}
+                      className="absolute top-2 right-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors z-10"
+                      title="Pin this chart to the main report"
+                    >
+                      📌 Pin
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
