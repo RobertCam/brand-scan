@@ -113,20 +113,20 @@ Forums: ${reportData.sentiment_analysis.forums.score}/100 - ${reportData.sentime
 Social: ${reportData.sentiment_analysis.social.score}/100 - ${reportData.sentiment_analysis.social.explanation}
 
 SWOT ANALYSIS:
-Strengths: ${reportData.swot_analysis.strengths.map(s => s.summary).join('; ')}
-Weaknesses: ${reportData.swot_analysis.weaknesses.map(w => w.summary).join('; ')}
-Opportunities: ${reportData.swot_analysis.opportunities.map(o => o.summary).join('; ')}
-Threats: ${reportData.swot_analysis.threats.map(t => t.summary).join('; ')}
+Strengths: ${reportData.swot_analysis?.strengths?.map(s => s.summary).join('; ') || 'No strengths data'}
+Weaknesses: ${reportData.swot_analysis?.weaknesses?.map(w => w.summary).join('; ') || 'No weaknesses data'}
+Opportunities: ${reportData.swot_analysis?.opportunities?.map(o => o.summary).join('; ') || 'No opportunities data'}
+Threats: ${reportData.swot_analysis?.threats?.map(t => t.summary).join('; ') || 'No threats data'}
 
 COMPETITIVE RANKING:
-${reportData.competitive_ranking.map((ranking, index) => 
+${reportData.competitive_ranking?.map((ranking, index) => 
   `${index + 1}. ${ranking.brand}: ${ranking.overall_score}/100 - ${ranking.ranking_justification}`
-).join('\n')}
+).join('\n') || 'No competitive ranking available'}
 
 EDITORIAL IDEAS:
-${reportData.editorial_ideas.map(idea => 
+${reportData.editorial_ideas?.map(idea => 
   `${idea.title}: ${idea.angle}`
-).join('\n')}
+).join('\n') || 'No editorial ideas available'}
 `;
 
     // Build conversation history
