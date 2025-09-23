@@ -283,9 +283,9 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                         <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900 text-sm">{message.chart.title}</h4>
-                            {onPinChart && (
+                            {onPinChart && message.chart && (
                               <button
-                                onClick={() => onPinChart(message.chart)}
+                                onClick={() => onPinChart(message.chart!)}
                                 className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                 title="Pin this chart to the main report"
                               >
@@ -365,6 +365,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                         type: 'sentiment_bar',
                         title: 'Sentiment Analysis',
                         description: 'Sentiment scores across different channels for your brand',
+                        data: reportData,
                         insights: [
                           'Compare sentiment performance across web, news, forums, and social channels',
                           'Identify which channels show the strongest positive sentiment',
@@ -388,6 +389,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                         type: 'competitive_radar',
                         title: 'Competitive Analysis',
                         description: 'Multi-dimensional comparison of competitors across key metrics',
+                        data: reportData,
                         insights: [
                           'Visualize competitive positioning across multiple dimensions',
                           'Identify areas where your brand excels or needs improvement',
@@ -411,6 +413,7 @@ export default function ChatDrawer({ isOpen, onClose, reportData, onPinChart }: 
                         type: 'score_breakdown',
                         title: 'Competitive Score Breakdown',
                         description: 'Detailed metric-by-metric analysis of competitive performance',
+                        data: reportData,
                         insights: [
                           'See exact scores for each competitor across all metrics',
                           'Identify specific areas for improvement',
