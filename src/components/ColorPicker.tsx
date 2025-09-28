@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Palette, Check, X } from 'lucide-react';
+import { Palette, X } from 'lucide-react';
 import { DEFAULT_THEMES, ChartTheme, generateColorPalette } from '@/lib/chart-themes';
 
 interface ColorPickerProps {

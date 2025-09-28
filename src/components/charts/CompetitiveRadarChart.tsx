@@ -10,6 +10,15 @@ interface CompetitiveRadarChartProps {
 }
 
 export default function CompetitiveRadarChart({ data, title = "Competitive Analysis", className = "" }: CompetitiveRadarChartProps) {
+  // Check if data is valid
+  if (!data || !data.competitive_ranking || data.competitive_ranking.length === 0) {
+    return (
+      <div className={`p-4 text-center text-gray-500 ${className}`}>
+        <p>No competitive data available</p>
+      </div>
+    );
+  }
+
   // Prepare data for radar chart
   const metrics = ['Sentiment', 'Share of Voice', 'AI Readiness', 'SEO Health', 'Social Resonance'];
   

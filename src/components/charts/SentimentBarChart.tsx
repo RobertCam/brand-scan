@@ -10,6 +10,15 @@ interface SentimentBarChartProps {
 }
 
 export default function SentimentBarChart({ data, title = "Sentiment Analysis", className = "" }: SentimentBarChartProps) {
+  // Check if data is valid
+  if (!data || !data.sentiment_analysis) {
+    return (
+      <div className={`p-4 text-center text-gray-500 ${className}`}>
+        <p>No sentiment data available</p>
+      </div>
+    );
+  }
+
   const chartData = [
     {
       channel: 'Web',

@@ -9,6 +9,15 @@ interface CompetitiveScoreChartProps {
 }
 
 export default function CompetitiveScoreChart({ data, title = "Competitive Score Breakdown", className = "" }: CompetitiveScoreChartProps) {
+  // Check if data is valid
+  if (!data || !data.competitive_ranking || data.competitive_ranking.length === 0) {
+    return (
+      <div className={`p-4 text-center text-gray-500 ${className}`}>
+        <p>No competitive data available</p>
+      </div>
+    );
+  }
+
   // Sort competitors by overall score
   const sortedCompetitors = [...data.competitive_ranking].sort((a, b) => b.overall_score - a.overall_score);
   

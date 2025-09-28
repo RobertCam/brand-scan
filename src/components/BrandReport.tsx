@@ -9,6 +9,7 @@ import ChatDrawer from './ChatDrawer';
 import ColorPicker from './ColorPicker';
 import { DynamicChart, SentimentBarChart, CompetitiveRadarChart, CompetitiveScoreChart } from './charts';
 import { ChartColorSettings, DEFAULT_COLOR_SETTINGS, getThemeColors } from '@/lib/chart-themes';
+import { PDFExportOptions, ChartExportData, exportPinnedChartsToPDF } from '@/lib/pdf-export';
 
 interface BrandReportProps {
   data: BrandAnalysisWithMetadata;
@@ -43,6 +44,7 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
   }>>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [colorSettings, setColorSettings] = useState<ChartColorSettings>(DEFAULT_COLOR_SETTINGS);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Load chat preference from localStorage on component mount
@@ -170,6 +172,70 @@ export default function BrandReport({ data, onNewAnalysis }: BrandReportProps) {
         [chartId]: colors
       }
     }));
+  };
+
+  // Export pinned charts to PDF
+  const handleExportPinnedChartsToPDF = async (options: PDFExportOptions) => {
+    setIsExportingPDF(true);
+    
+    try {
+      // Track export action
+      track('pdf_exported', {
+        type: 'pinned_charts',
+        brand: data.inputBrand || 'unknown',
+        roast_mode: data.roastMode || false,
+        chart_count: pinnedCharts.length,
+        include_insights: options.includeInsights,
+        include_metadata: options.includeMetadata,
+      });
+
+      // Wait for charts to render
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Prepare chart data for export
+      const chartExportData: ChartExportData[] = pinnedCharts.map(chart => {
+        const element = document.getElementById(`chart-${chart.id}`) as HTMLElement;
+        if (!element) {
+          console.warn(`Chart element not found: chart-${chart.id}`);
+          return null;
+        }
+        
+        console.log('Found chart element:', chart.id, element);
+        console.log('Element children:', element.children.length);
+        
+        // For now, let's try capturing the entire chart container
+        // This should include the chart title, description, and the actual chart
+        let chartContent = element;
+        
+        console.log('Chart content element:', chartContent);
+        console.log('Content dimensions:', chartContent.offsetWidth, chartContent.offsetHeight);
+        
+        return {
+          id: chart.id,
+          type: chart.type,
+          title: chart.title,
+          description: chart.description,
+          insights: chart.insights,
+          pinnedAt: chart.pinnedAt,
+          element: chartContent as HTMLElement
+        };
+      }).filter(chart => chart !== null) as ChartExportData[];
+
+      // Set default title if not provided
+      const exportOptions = {
+        ...options,
+        title: options.title || `${data.inputBrand || 'Brand'} Analysis Report`,
+        subtitle: options.subtitle || (data.roastMode ? '🔥 Brand Burn Report' : '📊 Brand Scan Report')
+      };
+
+      await exportPinnedChartsToPDF(chartExportData, data, exportOptions);
+      
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   const sections = [
@@ -768,7 +834,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
 
             {/* Pinned Charts Section */}
             {activeSection === 'pinned-charts' && (
-              <div className="space-y-6">
+              <div className="space-y-6" data-testid="pinned-charts-section">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-900">📌 Pinned Charts</h2>
                   <div className="flex items-center gap-4">
@@ -777,6 +843,14 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                     </p>
                     {pinnedCharts.length > 0 && (
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleExportPinnedChartsToPDF}
+                          disabled={isExportingPDF}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <FileText className="w-4 h-4" />
+                          {isExportingPDF ? 'Exporting...' : 'Export PDF'}
+                        </button>
                         <ColorPicker
                           selectedColors={getChartColors('global')}
                           onColorsChange={(colors) => {
@@ -820,7 +894,7 @@ ${idea.outline.map((point, i) => `${i + 1}. ${point}`).join('\n')}
                 ) : (
                   <div className="space-y-6">
                     {pinnedCharts.map((chart) => (
-                      <div key={chart.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                      <div key={chart.id} id={`chart-${chart.id}`} className="bg-white border border-gray-200 rounded-lg p-6">
                         <div className="flex items-center justify-between mb-4">
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">{chart.title}</h3>
