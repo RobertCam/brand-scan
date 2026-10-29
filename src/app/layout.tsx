@@ -17,9 +17,13 @@ export const metadata: Metadata = {
   title: "Brand Scan - AI-Powered Brand Analysis",
   description: "Be visible everywhere customers search. Analyze your brand's online presence, competitive positioning, and discover opportunities to improve AI-search visibility, SEO, and social resonance.",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
