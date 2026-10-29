@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { BrandAnalysisRequest, BrandAnalysisResponse } from '@/types/brand-analysis';
+import { ANALYSIS_MODEL, reasoningEffortNone } from '@/lib/openai-models';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -231,13 +232,14 @@ export async function POST(request: NextRequest) {
 
     // Call OpenAI with web search enabled using the responses API
     const response = await openai.responses.create({
-      model: 'gpt-4o',
+      model: ANALYSIS_MODEL,
       input: prompt + '\n\nIMPORTANT: Use web search to gather real-time information about the brand and competitors. Provide analysis based on current web data, news, and social media. For all sources, provide actual clickable URLs (e.g., https://example.com/article) that users can visit to verify the information. Return only valid JSON.',
       tools: [
         {
           type: 'web_search',
         },
       ],
+      reasoning: { effort: reasoningEffortNone },
       temperature: parseFloat(process.env.DEFAULT_TEMPERATURE || '0.3'),
     });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { BrandAnalysisWithMetadata } from '@/types/brand-analysis';
+import { CHAT_MODEL, ROUTER_MODEL, reasoningEffortNone } from '@/lib/openai-models';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,8 +19,10 @@ async function performWebSearch(query: string, focus?: string): Promise<string> 
 
     // Use OpenAI's responses API with web_search tool
     const response = await openai.responses.create({
+      model: CHAT_MODEL,
       input: enhancedQuery,
       tools: [{ type: 'web_search' }],
+      reasoning: { effort: reasoningEffortNone },
     });
 
     // Extract search results from the response
@@ -90,10 +93,11 @@ Question: Can the user's request be fully answered using ONLY the data listed ab
 Respond with ONLY "YES" if the existing data is sufficient, or "NO" if additional web search is needed to provide a complete answer.`;
 
     const searchDecision = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: ROUTER_MODEL,
+      reasoning_effort: reasoningEffortNone,
       messages: [{ role: 'user', content: searchDecisionPrompt }],
       temperature: 0.1,
-      max_tokens: 10,
+      max_completion_tokens: 10,
     });
 
     const needsWebSearch = searchDecision.choices[0]?.message?.content?.trim().toUpperCase() === 'NO';
@@ -208,10 +212,11 @@ CRITICAL CHART DATA REQUIREMENTS:
 Respond with ONLY the JSON object:`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: ROUTER_MODEL,
+      reasoning_effort: reasoningEffortNone,
       messages: [{ role: 'user', content: chartPrompt }],
       temperature: 0.1,
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -376,10 +381,11 @@ Question: Can the user's question be fully answered using ONLY the data listed a
 Respond with ONLY "YES" if the existing data is sufficient, or "NO" if additional web search is needed to provide a complete answer.`;
 
     const searchDecision = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: ROUTER_MODEL,
+      reasoning_effort: reasoningEffortNone,
       messages: [{ role: 'user', content: searchDecisionPrompt }],
       temperature: 0.1,
-      max_tokens: 10,
+      max_completion_tokens: 10,
     });
 
     const searchDecisionResult = searchDecision.choices[0]?.message?.content?.trim().toUpperCase();
@@ -422,10 +428,11 @@ Question: Does the user want a data visualization, chart, graph, or plot? Look f
 Respond with ONLY "YES" if they want a visualization, or "NO" if they want text analysis.`;
 
     const chartDetection = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: ROUTER_MODEL,
+      reasoning_effort: reasoningEffortNone,
       messages: [{ role: 'user', content: chartDetectionPrompt }],
       temperature: 0.1,
-      max_tokens: 10,
+      max_completion_tokens: 10,
     });
 
     const chartDetectionResult = chartDetection.choices[0]?.message?.content?.trim().toUpperCase();
@@ -533,7 +540,8 @@ Now provide a strategic response to their question. Be direct and concise - no l
     } else {
       // Only call the main chat API for non-chart requests
       response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: CHAT_MODEL,
+        reasoning_effort: reasoningEffortNone,
         messages: [
           {
             role: 'system',
@@ -549,7 +557,7 @@ Now provide a strategic response to their question. Be direct and concise - no l
           },
         ],
         temperature: reportData.roastMode ? 0.8 : 0.5,
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
         stream: true,
         tools: [],
       });

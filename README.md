@@ -17,7 +17,7 @@ A comprehensive brand analysis tool that leverages OpenAI's Responses API with w
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
 - **Backend**: Next.js API routes
-- **LLM**: OpenAI GPT-4o with web search
+- **LLM**: OpenAI GPT-5.6 (Sol for reports, Terra for chat, Luna for routing) with web search
 - **Schema Extraction**: Cheerio for HTML parsing
 - **Export**: jsPDF for PDF generation
 
